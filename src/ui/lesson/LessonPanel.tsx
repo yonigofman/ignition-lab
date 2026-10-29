@@ -53,7 +53,7 @@ export function LessonPanel() {
           </button>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto p-4 text-sm leading-relaxed text-(--text)">
+      <div className="lesson-content flex-1 overflow-y-auto p-4 text-sm leading-relaxed text-(--text)">
         <active.Content />
       </div>
     </div>
