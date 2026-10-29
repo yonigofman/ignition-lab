@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { reduceAll } from "../../src/engine/reducer";
 import { createInitialSnapshot } from "../../src/engine/snapshot";
 import { upiCompact3Node } from "../../src/scenarios/upi-compact-3node";
-import { deriveTopologyView } from "../../src/ui/topology/deriveTopologyView";
+import { deriveTopologyView, nonEmptyZones, type TopologyNodeView } from "../../src/ui/topology/deriveTopologyView";
 import { fullEventsFor } from "../helpers/fullScenarioEvents";
 
 const events = fullEventsFor(upiCompact3Node);
@@ -107,5 +107,57 @@ describe("deriveTopologyView", () => {
   it("highlights nothing when no node id is given", () => {
     const view = deriveTopologyView(snapshotAt(0), upiCompact3Node.topology, events);
     expect(view.nodes.every((n) => !n.highlighted)).toBe(true);
+  });
+
+  it("lets a topology node's own zone override the role-inferred default", () => {
+    const topology = {
+      nodes: [
+        { id: "provisioning", role: "provisioning" as const, label: "Provisioning", zone: "provisioning" as const },
+        { id: "bootstrap", role: "bootstrap" as const, label: "Bootstrap", zone: "provisioning" as const },
+        { id: "master-0", role: "master" as const, label: "master-0" },
+      ],
+      links: [],
+    };
+    const view = deriveTopologyView(createInitialSnapshot(), topology, []);
+    expect(view.nodes.find((n) => n.id === "provisioning")?.zone).toBe("provisioning");
+    expect(view.nodes.find((n) => n.id === "bootstrap")?.zone).toBe("provisioning");
+    expect(view.nodes.find((n) => n.id === "master-0")?.zone).toBe("cluster");
+  });
+
+  it("falls back a bare provisioning-role node to the provisioning zone with no explicit override", () => {
+    const topology = {
+      nodes: [{ id: "provisioning", role: "provisioning" as const, label: "Provisioning" }],
+      links: [],
+    };
+    const view = deriveTopologyView(createInitialSnapshot(), topology, []);
+    expect(view.nodes[0]?.zone).toBe("provisioning");
+  });
+});
+
+describe("nonEmptyZones", () => {
+  function nodeInZone(zone: TopologyNodeView["zone"]): TopologyNodeView {
+    return {
+      id: "x",
+      role: "master",
+      label: "x",
+      phase: "off",
+      power: "off",
+      ready: false,
+      rebootCount: 0,
+      zone,
+      etcdMember: false,
+      active: false,
+      removed: false,
+      highlighted: false,
+    };
+  }
+
+  it("keeps only zones that have at least one node, in the given order", () => {
+    const nodes = [nodeInZone("cluster"), nodeInZone("provisioning")];
+    expect(nonEmptyZones(nodes, ["provisioning", "infra", "cluster"])).toEqual(["provisioning", "cluster"]);
+  });
+
+  it("returns an empty list when no nodes are given", () => {
+    expect(nonEmptyZones([], ["provisioning", "infra", "cluster"])).toEqual([]);
   });
 });

@@ -5,14 +5,18 @@ import type { InstallEvent, NodeId } from "../../engine/events";
 import type { Scenario } from "../../engine/scenario";
 import type { ClusterSnapshot } from "../../engine/snapshot";
 import { ClusterNode, type ClusterFlowNode } from "./ClusterNode";
-import { deriveTopologyView, topologyEdgeColor, type TopologyZone } from "./deriveTopologyView";
+import { deriveTopologyView, nonEmptyZones, topologyEdgeColor, type TopologyZone } from "./deriveTopologyView";
 import { EtcdRing } from "./EtcdRing";
 import { ZoneNode, type ZoneFlowNode } from "./ZoneNode";
 
 const NODE_TYPES = { cluster: ClusterNode, zone: ZoneNode };
 
-const ZONE_LABEL: Record<TopologyZone, string> = { infra: "Helper / infra", cluster: "Cluster network" };
-const ZONE_ORDER: TopologyZone[] = ["infra", "cluster"];
+const ZONE_LABEL: Record<TopologyZone, string> = {
+  infra: "Helper / infra",
+  provisioning: "Provisioning network",
+  cluster: "Cluster network",
+};
+const ZONE_ORDER: TopologyZone[] = ["provisioning", "infra", "cluster"];
 const NODE_WIDTH = 200;
 const NODE_HEIGHT = 96;
 const NODE_GAP = 16;
@@ -49,7 +53,7 @@ export function TopologyCanvas({
 
     const flowNodes: (ZoneFlowNode | ClusterFlowNode)[] = [];
     let zoneX = 0;
-    for (const zone of ZONE_ORDER) {
+    for (const zone of nonEmptyZones(view.nodes, ZONE_ORDER)) {
       const zoneNodes = byZone.get(zone) ?? [];
       const zoneId = `zone-${zone}`;
       const height = Math.max(zoneNodes.length, 1) * (NODE_HEIGHT + NODE_GAP) + ZONE_PADDING;

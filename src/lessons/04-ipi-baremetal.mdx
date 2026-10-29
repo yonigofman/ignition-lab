@@ -1,0 +1,63 @@
+import { HighlightNode } from "../ui/lesson/components/HighlightNode";
+import { PlayUntil } from "../ui/lesson/components/PlayUntil";
+import { ViewArtifact } from "../ui/lesson/components/ViewArtifact";
+
+export const meta = {
+  title: "IPI — same story, automated",
+  module: 4,
+  commands: ["oc"],
+};
+
+Same bootstrap dance, same event vocabulary — but IPI (Installer-Provisioned Infrastructure) drives the
+machines itself instead of the learner owning DNS, load balancers, and CSR approval. Switch the
+scenario picker to "IPI bare metal" and flip on the **"Who does this?"** toggle in the header before
+playing — it'll call out the handful of moments where this scenario is quietly doing something you had
+to do by hand in the UPI scenarios.
+
+## Provisioning instead of a helper
+
+<HighlightNode id="provisioning" />
+
+There's no helper/bastion host here. Instead, a **provisioning host** runs the installer; the bootstrap
+VM runs on it and hosts **Ironic**, which powers the other machines on over their BMCs (`bmc.power`
+events, Redfish in this scenario) and deploys RHCOS to them — no PXE server or DHCP you set up by hand.
+
+<ViewArtifact id="install-config" />
+
+Compare this install-config.yaml to the UPI ones: instead of `platform: none`, it lists every host
+under `platform.baremetal.hosts` with a BMC address, a boot MAC, and the cluster's API/ingress **VIPs**
+— there's no separate load-balancer box in the topology because keepalived/haproxy run on-cluster.
+
+<PlayUntil chapter="Bootstrap complete" />
+
+## The same handover, automated
+
+Bootstrap still starts a temporary control plane, masters still pull their full config through the
+Machine Config Server, and the production control plane still takes over — identical to UPI. What's
+different is what happens *after* bootstrap reports complete.
+
+<PlayUntil chapter="Masters register and converge" />
+
+With the toggle on, you should have seen a callout: the installer destroys bootstrap and removes it
+from the on-cluster VIP automatically. In UPI, that was a gate — you had to run `lab lb rm` yourself
+before bootstrap could go away.
+
+## CSRs, automated too
+
+<PlayUntil chapter="Install complete" />
+
+Watch for the toggle's callouts again as the workers join: every CSR here — client and serving, for
+every worker — is approved by the **machine-approver**, not by you. `upi-3m-2w` made you approve these
+by hand with `oc adm certificate approve`; here, nothing blocks.
+
+<ViewArtifact id="manifests" />
+
+One artifact that *is* unique to bare-metal IPI: a `BareMetalHost` resource per host, created once
+Ironic has inspected it. There's no equivalent of this in a UPI install.
+
+## What's genuinely the same
+
+Ignition, the Machine Config Server, ClusterOperator convergence, and even the image-registry storage
+gotcha (still `Removed` with no storage configured) are identical to UPI underneath. IPI doesn't change
+*how* OpenShift installs itself once the machines exist — it only changes who's responsible for getting
+the machines to that point.

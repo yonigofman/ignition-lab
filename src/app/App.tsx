@@ -2,6 +2,8 @@ import { useState } from "react";
 import type { NodeId } from "../engine/events";
 import { ArtifactsPanel } from "../ui/artifacts/ArtifactsPanel";
 import { BlockingBanner } from "../ui/blocking/BlockingBanner";
+import { deriveWhoDoesThisView } from "../ui/contrast/deriveWhoDoesThisView";
+import { WhoDoesThisBanner } from "../ui/contrast/WhoDoesThisBanner";
 import { Inspector } from "../ui/inspector/Inspector";
 import { LessonContext } from "../ui/lesson/LessonContext";
 import { LessonPanel } from "../ui/lesson/LessonPanel";
@@ -22,8 +24,10 @@ export function App() {
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [filesOpen, setFilesOpen] = useState(false);
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
+  const [whoDoesThisOn, setWhoDoesThisOn] = useState(false);
 
   const lessonState = deriveLessonState(sim.scenario, sim.snapshot, sim.blockingStep);
+  const whoDoesThisView = deriveWhoDoesThisView(sim.events, sim.currentT, whoDoesThisOn);
 
   return (
     <div className="flex h-screen w-screen flex-col bg-(--bg) text-(--text)">
@@ -60,6 +64,17 @@ export function App() {
             className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
           >
             {filesOpen ? "Hide files" : "Files"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setWhoDoesThisOn((on) => !on)}
+            className={`rounded border px-2 py-1 text-xs ${
+              whoDoesThisOn
+                ? "border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-400"
+                : "border-(--border) text-(--text-muted) hover:text-(--text)"
+            }`}
+          >
+            Who does this?
           </button>
           <button
             type="button"
@@ -123,6 +138,7 @@ export function App() {
         />
       )}
 
+      <WhoDoesThisBanner view={whoDoesThisView} />
       <BlockingBanner lessonState={lessonState} />
 
       <Timeline

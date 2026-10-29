@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Scenario } from "../../src/engine/scenario";
+import { ipiBaremetal } from "../../src/scenarios/ipi-baremetal";
 import { upiCompact3Node } from "../../src/scenarios/upi-compact-3node";
 import { upi3m2w } from "../../src/scenarios/upi-3m-2w";
 
@@ -14,7 +15,7 @@ const REQUIRED_ARTIFACT_IDS = [
   "kubeadmin-password",
 ];
 
-const SCENARIOS: Scenario[] = [upiCompact3Node, upi3m2w];
+const SCENARIOS: Scenario[] = [upiCompact3Node, upi3m2w, ipiBaremetal];
 
 describe.each(SCENARIOS)("$title > artifacts", (scenario) => {
   it("defines every required artifact exactly once", () => {

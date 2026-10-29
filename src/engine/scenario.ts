@@ -1,10 +1,14 @@
 import { maxEventTime, type InstallEvent, type NodeId } from "./events";
 import type { ClusterSnapshot, NodeRole } from "./snapshot";
 
+export type TopologyZone = "infra" | "cluster" | "provisioning";
+
 export interface TopologyNode {
   id: NodeId;
   role: NodeRole;
   label: string;
+  /** Overrides the zone inferred from `role`. Needed for IPI, where the bootstrap VM runs on the provisioning host and so visually belongs with it, not with the cluster-network nodes. */
+  zone?: TopologyZone;
 }
 
 export interface TopologyLink {

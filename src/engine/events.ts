@@ -7,6 +7,10 @@ export interface BaseEvent {
   type: string;
   node?: NodeId;
   msg?: string;
+  /** Who performed this step in the real world: "learner" (manual, UPI-style) or "installer" (automated). Only set on events worth contrasting with the other install path - drives the "who does this?" toggle. */
+  actor?: "learner" | "installer";
+  /** Shown by the "who does this?" toggle when set: what the learner would have had to do by hand on the other install path. */
+  contrastNote?: string;
 }
 
 export type InstallEvent =

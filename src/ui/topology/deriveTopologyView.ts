@@ -1,5 +1,5 @@
 import type { InstallEvent, NodeId } from "../../engine/events";
-import type { Scenario } from "../../engine/scenario";
+import type { Scenario, TopologyZone } from "../../engine/scenario";
 import {
   defaultNodeState,
   type ClusterSnapshot,
@@ -8,7 +8,7 @@ import {
   type RebootReason,
 } from "../../engine/snapshot";
 
-export type TopologyZone = "infra" | "cluster";
+export type { TopologyZone } from "../../engine/scenario";
 export type TopologyEdgeCategory = "ignition" | "mcs" | "dns" | "bmc";
 
 export interface TopologyNodeView {
@@ -56,7 +56,14 @@ export function topologyEdgeColor(category: TopologyEdgeCategory): string {
 const INFRA_ROLES: ReadonlySet<NodeRole> = new Set(["helper", "lb"]);
 
 function zoneForRole(role: NodeRole): TopologyZone {
-  return INFRA_ROLES.has(role) ? "infra" : "cluster";
+  if (INFRA_ROLES.has(role)) return "infra";
+  if (role === "provisioning") return "provisioning";
+  return "cluster";
+}
+
+/** Which zones (in `order`) actually have at least one node, so a scenario that has no helper/lb (IPI) doesn't render an empty "Helper / infra" box, and vice versa. */
+export function nonEmptyZones(nodes: TopologyNodeView[], order: TopologyZone[]): TopologyZone[] {
+  return order.filter((zone) => nodes.some((n) => n.zone === zone));
 }
 
 function eventParticipants(event: InstallEvent): NodeId[] {
@@ -140,7 +147,7 @@ export function deriveTopologyView(
       ready: state.ready,
       rebootCount: state.rebootCount,
       lastRebootReason: state.lastRebootReason,
-      zone: zoneForRole(topoNode.role),
+      zone: topoNode.zone ?? zoneForRole(topoNode.role),
       etcdMember: snapshot.etcdMembers.includes(topoNode.id),
       active: activeIds.has(topoNode.id),
       removed: topoNode.role === "bootstrap" && state.power === "off",
