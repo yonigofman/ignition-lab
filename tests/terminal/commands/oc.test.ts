@@ -109,4 +109,16 @@ describe("oc unknown subcommands", () => {
     const result = oc(["get", "pods"], createInitialSnapshot());
     expect(result.output).toMatch(/not supported|unknown/i);
   });
+
+  it("shows usage (not an error) when called with no arguments", () => {
+    const result = oc([], createInitialSnapshot());
+    expect(result.output).toContain("oc get nodes");
+    expect(result.output).not.toMatch(/^error/i);
+  });
+
+  it("shows an error plus usage for a completely unrecognized subcommand", () => {
+    const result = oc(["frobnicate"], createInitialSnapshot());
+    expect(result.output).toMatch(/unknown command/i);
+    expect(result.output).toContain("oc get nodes");
+  });
 });

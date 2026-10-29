@@ -91,5 +91,9 @@ export function runLine(line: string, snapshot: ClusterSnapshot): CommandResult 
     };
   }
 
+  if (args[0] === "--help" || args[0] === "-h" || args[0] === "help") {
+    return { output: command.usage };
+  }
+
   return command.run(args, snapshot);
 }

@@ -1,6 +1,7 @@
 import type { InstallEvent } from "../../engine/events";
 import type { ClusterSnapshot } from "../../engine/snapshot";
 import { formatAge } from "../formatAge";
+import { registry } from "../registry";
 import { formatTable } from "../table";
 import type { Command, CommandResult } from "../types";
 
@@ -116,7 +117,9 @@ export const oc: Command = (args, snapshot) => {
       return get(args.slice(1), snapshot);
     case "adm":
       return adm(args.slice(1), snapshot);
+    case undefined:
+      return { output: registry.oc?.usage ?? "" };
     default:
-      return { output: `error: unknown command "oc ${args.join(" ")}"` };
+      return { output: `error: unknown command "oc ${args.join(" ")}"\n\n${registry.oc?.usage ?? ""}` };
   }
 };

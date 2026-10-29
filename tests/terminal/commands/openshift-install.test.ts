@@ -42,4 +42,10 @@ describe("openshift-install unknown args", () => {
     const result = openshiftInstall(["create", "manifests"], createInitialSnapshot());
     expect(result.output).toMatch(/not supported|unknown/i);
   });
+
+  it("shows usage (not an error) when called with no arguments", () => {
+    const result = openshiftInstall([], createInitialSnapshot());
+    expect(result.output).toContain("wait-for bootstrap-complete");
+    expect(result.output).not.toMatch(/unknown/i);
+  });
 });

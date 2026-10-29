@@ -24,6 +24,27 @@ describe("runLine", () => {
     const result = runLine("zzzzzzzzzz", snapshot);
     expect(result.output).toMatch(/command not found/i);
   });
+
+  it("shows usage (not an error) for a bare command with a sub-command router", () => {
+    const result = runLine("oc", snapshot);
+    expect(result.output).toContain("oc get nodes");
+    expect(result.output).not.toMatch(/command not found/i);
+  });
+
+  it("shows usage for <command> --help", () => {
+    const result = runLine("oc --help", snapshot);
+    expect(result.output).toContain("oc get nodes");
+  });
+
+  it("shows usage for <command> -h", () => {
+    const result = runLine("dig -h", snapshot);
+    expect(result.output).toMatch(/dig <name>/);
+  });
+
+  it("shows usage for <command> help", () => {
+    const result = runLine("oc help", snapshot);
+    expect(result.output).toContain("oc get nodes");
+  });
 });
 
 describe("help", () => {

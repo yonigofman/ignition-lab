@@ -1,5 +1,6 @@
 import type { InstallEvent } from "../../engine/events";
 import { LB_FRONTENDS, type ClusterSnapshot, type LbBackendState } from "../../engine/snapshot";
+import { registry } from "../registry";
 import type { Command, CommandResult } from "../types";
 
 const KNOWN_STATES: LbBackendState[] = ["up", "down", "removed"];
@@ -65,7 +66,9 @@ export const lab: Command = (args, snapshot) => {
       return dns(args.slice(1), snapshot);
     case "lb":
       return lb(args.slice(1), snapshot);
+    case undefined:
+      return { output: registry.lab?.usage ?? "" };
     default:
-      return { output: `[lab] unknown command "lab ${args.join(" ")}"` };
+      return { output: `[lab] unknown command "lab ${args.join(" ")}"\n\n${registry.lab?.usage ?? ""}` };
   }
 };

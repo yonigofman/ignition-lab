@@ -90,4 +90,10 @@ describe("lab unknown subcommand", () => {
     const result = lab(["wat"], snapshot);
     expect(result.output).toMatch(/unknown/i);
   });
+
+  it("shows usage (not an error) when called with no arguments", () => {
+    const result = lab([], snapshot);
+    expect(result.output).toContain("lab dns add");
+    expect(result.output).not.toMatch(/unknown/i);
+  });
 });

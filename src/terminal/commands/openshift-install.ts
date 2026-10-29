@@ -1,4 +1,5 @@
 import type { ClusterSnapshot } from "../../engine/snapshot";
+import { registry } from "../registry";
 import type { Command, CommandResult } from "../types";
 
 const BOOTSTRAP_DONE_PHASES: ClusterSnapshot["phase"][] = ["bootstrap-complete", "converging", "complete"];
@@ -44,5 +45,10 @@ export const openshiftInstall: Command = (args, snapshot) => {
   if (args[0] === "wait-for") {
     return waitFor(args.slice(1), snapshot);
   }
-  return { output: `error: unknown command "openshift-install ${args.join(" ")}" (not supported by this simulator)` };
+  if (args[0] === undefined) {
+    return { output: registry["openshift-install"]?.usage ?? "" };
+  }
+  return {
+    output: `error: unknown command "openshift-install ${args.join(" ")}"\n\n${registry["openshift-install"]?.usage ?? ""}`,
+  };
 };
