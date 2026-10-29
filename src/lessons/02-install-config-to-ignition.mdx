@@ -1,0 +1,35 @@
+export const meta = {
+  title: "install-config → ignition",
+  module: 2,
+  commands: ["curl", "dig"],
+};
+
+## The artifact chain
+
+1. **`install-config.yaml`** — you write this by hand for UPI (`platform: none`). It describes the
+   cluster name, base domain, and network settings.
+2. **`openshift-install create manifests`** — turns that into Kubernetes manifests. For a compact
+   cluster like this one (no dedicated workers), the masters are marked schedulable so they can run
+   regular workloads too.
+3. **`openshift-install create ignition-configs`** — produces `bootstrap.ign`, `master.ign`,
+   `worker.ign`, `metadata.json`, and the cluster's `kubeconfig`/`kubeadmin-password`.
+
+## Who consumes what
+
+- **`bootstrap.ign`** is large, and is served straight from the helper's HTTP server — bootstrap fetches
+  it directly on first boot.
+- **`master.ign`** and **`worker.ign`** are deliberately tiny **pointer configs**. All they contain is a
+  URL: `https://api-int.<cluster>.<base>:22623/config/{master,worker}`. The real, full config lives on
+  the bootstrap node's **Machine Config Server**, and masters/workers fetch it from there — through the
+  API load balancer, not directly.
+
+That's why you'll see two separate events for a master: `ignition.fetched` (the small pointer config,
+from the helper) followed later by `ignition.mcs_served` (the real config, from bootstrap via the load
+balancer).
+
+## The 24-hour clock
+
+The certificates embedded in these ignition configs expire **24 hours** after they're generated. If
+your install takes longer than that — networking problems, waiting on hardware, whatever — the
+pointer configs stop working and you have to regenerate everything. This simulator's install finishes
+in a couple of minutes, but a real one doesn't get that luxury.

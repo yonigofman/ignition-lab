@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { reduceAll } from "../../src/engine/reducer";
 import { createInitialSnapshot } from "../../src/engine/snapshot";
-import { SimulatorSource } from "../../src/engine/sources/SimulatorSource";
 import { upiCompact3Node } from "../../src/scenarios/upi-compact-3node";
 import { deriveTopologyView } from "../../src/ui/topology/deriveTopologyView";
+import { fullEventsFor } from "../helpers/fullScenarioEvents";
 
-const events = new SimulatorSource(upiCompact3Node).getEvents();
+const events = fullEventsFor(upiCompact3Node);
 
 function snapshotAt(t: number) {
   return reduceAll(events, t, createInitialSnapshot(upiCompact3Node.initialState));
@@ -96,5 +96,16 @@ describe("deriveTopologyView", () => {
     const a = deriveTopologyView(snapshotAt(35), upiCompact3Node.topology, events);
     const b = deriveTopologyView(snapshotAt(35), upiCompact3Node.topology, events);
     expect(a).toEqual(b);
+  });
+
+  it("marks only the requested node as highlighted, independent of activity/selection", () => {
+    const view = deriveTopologyView(snapshotAt(0), upiCompact3Node.topology, events, 2, "bootstrap");
+    expect(view.nodes.find((n) => n.id === "bootstrap")?.highlighted).toBe(true);
+    expect(view.nodes.find((n) => n.id === "master-0")?.highlighted).toBe(false);
+  });
+
+  it("highlights nothing when no node id is given", () => {
+    const view = deriveTopologyView(snapshotAt(0), upiCompact3Node.topology, events);
+    expect(view.nodes.every((n) => !n.highlighted)).toBe(true);
   });
 });

@@ -29,21 +29,34 @@ export function ClusterNode({ data }: NodeProps<ClusterFlowNode>) {
   const { view } = data;
   const prefersReducedMotion = useReducedMotion();
 
+  const highlightShadow = "0 0 0px 3px #22d3ee";
+
   return (
     <motion.div
       className="rounded-lg border-2 bg-(--surface) px-3 py-2 text-xs text-(--text) shadow-lg"
       style={{ borderColor: PHASE_RING_COLOR[view.phase] }}
       animate={
         prefersReducedMotion
-          ? { opacity: view.removed ? 0.15 : view.power === "on" ? 1 : 0.5 }
+          ? {
+              opacity: view.removed ? 0.15 : view.power === "on" ? 1 : 0.5,
+              boxShadow: view.highlighted ? highlightShadow : "0 0 0px transparent",
+            }
           : {
               opacity: view.removed ? 0.15 : view.power === "on" ? 1 : 0.5,
               scale: view.removed ? 0.85 : view.active ? [1, 1.08, 1] : 1,
               rotate: view.active && view.rebootCount > 0 && view.phase === "booting" ? [0, -4, 4, 0] : 0,
-              boxShadow: view.active ? `0 0 16px ${PHASE_RING_COLOR[view.phase]}` : "0 0 0px transparent",
+              boxShadow: view.highlighted
+                ? [highlightShadow, "0 0 12px 3px #22d3ee", highlightShadow]
+                : view.active
+                  ? `0 0 16px ${PHASE_RING_COLOR[view.phase]}`
+                  : "0 0 0px transparent",
             }
       }
-      transition={{ duration: view.removed ? 1.2 : 0.4 }}
+      transition={
+        view.highlighted && !prefersReducedMotion
+          ? { duration: 1.2, repeat: Infinity }
+          : { duration: view.removed ? 1.2 : 0.4 }
+      }
     >
       <Handle type="target" position={Position.Left} />
       <div className="font-semibold">{view.label}</div>

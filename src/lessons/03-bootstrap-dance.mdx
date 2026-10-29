@@ -1,0 +1,83 @@
+import { Gate } from "../ui/lesson/components/Gate";
+import { HighlightNode } from "../ui/lesson/components/HighlightNode";
+import { PlayUntil } from "../ui/lesson/components/PlayUntil";
+import { Predict } from "../ui/lesson/components/Predict";
+
+export const meta = {
+  title: "The bootstrap dance",
+  module: 3,
+  commands: ["oc", "lab", "journalctl", "ssh", "openshift-install"],
+};
+
+This is the centerpiece of a UPI install: the sequence that takes three blank machines and a bootstrap
+node to a running control plane. Use the buttons below to step through it — the simulation will pause
+at each handover so you can predict what happens next.
+
+## Bootstrap boots
+
+<HighlightNode id="bootstrap" />
+
+Bootstrap boots first. It fetches `bootstrap.ign` from the helper, writes it, and starts serving what
+the control plane machines will need — including the Machine Config Server on port `22623` — and brings
+up a single-member etcd plus a *temporary* Kubernetes control plane.
+
+<PlayUntil chapter="Masters join" />
+
+<Predict id="predict-temp-control-plane" />
+
+## Masters join
+
+Masters boot, fetch their small pointer ignition config from the helper, then pull the real config from
+bootstrap's Machine Config Server — through the API load balancer, not directly. Watch for the
+`install-to-disk` reboot on each master once it's written RHCOS to disk.
+
+<PlayUntil chapter="Control plane comes up" />
+
+<Predict id="predict-mcs-served" />
+
+## Control plane comes up
+
+The temporary control plane schedules the production control plane's components onto the masters. The
+Cluster Version Operator starts and brings up the etcd operator, which scales etcd from bootstrap's
+single member out to all three masters.
+
+<PlayUntil chapter="Bootstrap complete" />
+
+<Predict id="predict-cvo-etcd" />
+
+## Bootstrap complete
+
+The temporary control plane hands over to the now-running production control plane, bootstrap injects
+the remaining OpenShift components, and `openshift-install wait-for bootstrap-complete` reports it's
+safe to remove bootstrap.
+
+In a UPI install, "safe to remove" doesn't mean "removed automatically" — **you** have to take bootstrap
+out of the load balancer yourself before it can be destroyed.
+
+<Gate id="remove-bootstrap-from-lb" />
+
+Open the terminal and run:
+
+```
+lab lb rm 6443 bootstrap
+lab lb rm 22623 bootstrap
+```
+
+<PlayUntil chapter="Masters register and converge" />
+
+## Masters register and converge
+
+<HighlightNode id="master-0" />
+
+With bootstrap gone, the masters register as real Kubernetes Node objects, their client CSRs get
+auto-approved (this is a compact cluster — there are no workers here to need *manual* approval, that's
+module 4), and each one does one more reboot as the machine-config daemon pivots it onto the release
+image.
+
+<PlayUntil chapter="Install complete" />
+
+## Install complete
+
+Once every required ClusterOperator reports Available, `openshift-install wait-for install-complete`
+returns and the cluster is ready. Try `oc get clusterversion` and `oc get co` in the terminal to see it
+for yourself.

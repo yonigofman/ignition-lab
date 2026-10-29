@@ -25,10 +25,21 @@ export interface TopologyCanvasProps {
   events: InstallEvent[];
   selectedNodeId: NodeId | null;
   onSelectNode: (nodeId: NodeId | null) => void;
+  highlightedNodeId?: NodeId | null;
 }
 
-export function TopologyCanvas({ snapshot, topology, events, selectedNodeId, onSelectNode }: TopologyCanvasProps) {
-  const view = useMemo(() => deriveTopologyView(snapshot, topology, events), [snapshot, topology, events]);
+export function TopologyCanvas({
+  snapshot,
+  topology,
+  events,
+  selectedNodeId,
+  onSelectNode,
+  highlightedNodeId = null,
+}: TopologyCanvasProps) {
+  const view = useMemo(
+    () => deriveTopologyView(snapshot, topology, events, 2, highlightedNodeId),
+    [snapshot, topology, events, highlightedNodeId]
+  );
 
   const nodes = useMemo<(ZoneFlowNode | ClusterFlowNode)[]>(() => {
     const byZone = new Map<TopologyZone, typeof view.nodes>();

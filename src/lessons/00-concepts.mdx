@@ -1,0 +1,47 @@
+export const meta = {
+  title: "Concepts",
+  module: 0,
+  commands: [],
+};
+
+## IPI vs UPI
+
+OpenShift installs come in two flavors. **IPI** (Installer-Provisioned Infrastructure) has the
+installer create and manage the VMs, DNS, and load balancers for you. **UPI** (User-Provisioned
+Infrastructure) is the opposite: you bring your own machines, DNS, and load balancers, and the
+installer just gets OpenShift running on top of them. This simulator starts with a UPI install,
+because it's the one where you have to understand every moving part yourself.
+
+## RHCOS
+
+Every node in an OpenShift cluster runs **RHCOS** (Red Hat CoreOS) — an immutable, container-focused
+operating system that's managed entirely by the cluster, not by hand. You don't SSH in and run
+`yum update`; the Machine Config Operator changes RHCOS by writing a new image and rebooting the node
+into it.
+
+## Ignition
+
+**Ignition** is how a freshly-booted RHCOS machine gets configured on its very first boot: users,
+disks, systemd units, files — all of it comes from an ignition config, a JSON document the machine
+fetches before it does anything else. You'll see `ignition.fetched` events in the timeline whenever a
+node pulls one down.
+
+## Release payload
+
+The **release payload** is a single container image that pins the exact version of every OpenShift
+component — every operator, every core binary — so the whole cluster comes up as one known-good set,
+not whatever versions happened to be on disk.
+
+## CVO
+
+The **Cluster Version Operator** is the operator that installs and manages all the other operators. It
+reads the release payload's manifests and reconciles the cluster toward whatever that payload
+describes. You'll see a `cvo.started` event partway through bootstrap — that's the moment the CVO
+takes over and starts bringing up everything else.
+
+## Operators
+
+Almost everything in a running OpenShift cluster is managed by an **operator**: a controller that
+watches some part of the cluster and keeps it converged on a desired state. `etcd`, `network`,
+`ingress`, `console` — each one you'll see in `oc get co` later is a separate operator doing its own
+job.

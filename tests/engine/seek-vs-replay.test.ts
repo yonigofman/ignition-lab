@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { upiCompact3Node } from "../../src/scenarios/upi-compact-3node";
-import { SimulatorSource } from "../../src/engine/sources/SimulatorSource";
 import { reduce, reduceAll } from "../../src/engine/reducer";
 import { createInitialSnapshot } from "../../src/engine/snapshot";
+import { fullEventsFor } from "../helpers/fullScenarioEvents";
 
 describe("seek vs replay equivalence", () => {
-  const source = new SimulatorSource(upiCompact3Node);
-  const events = source.getEvents();
+  const events = fullEventsFor(upiCompact3Node);
   const maxT = Math.max(...events.map((e) => e.t));
 
   it("has events to exercise (scenario is not empty)", () => {

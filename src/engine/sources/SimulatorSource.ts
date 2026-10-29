@@ -1,7 +1,12 @@
 import type { InstallEvent } from "../events";
 import { reduceAll } from "../reducer";
-import type { Scenario } from "../scenario";
+import type { Scenario, ScenarioStep } from "../scenario";
 import type { EventSource } from "./EventSource";
+
+interface Walk {
+  events: InstallEvent[];
+  blockingStep: ScenarioStep | null;
+}
 
 export class SimulatorSource implements EventSource {
   private readonly dispatched: InstallEvent[] = [];
@@ -17,7 +22,7 @@ export class SimulatorSource implements EventSource {
     this.dispatched.push(event);
   }
 
-  getEvents(): InstallEvent[] {
+  private walk(): Walk {
     const emitted: InstallEvent[] = [];
 
     for (let i = 0; i < this.scenario.steps.length; i++) {
@@ -32,14 +37,14 @@ export class SimulatorSource implements EventSource {
       if (step.kind === "gate") {
         const snapshot = reduceAll([...emitted, ...this.dispatched], Infinity);
         if (!step.check(snapshot)) {
-          return [...emitted, ...this.dispatched];
+          return { events: [...emitted, ...this.dispatched], blockingStep: step };
         }
         continue;
       }
 
       if (step.kind === "predict") {
         if (!this.acknowledged.has(i)) {
-          return [...emitted, ...this.dispatched];
+          return { events: [...emitted, ...this.dispatched], blockingStep: step };
         }
         continue;
       }
@@ -47,6 +52,14 @@ export class SimulatorSource implements EventSource {
       // step.kind === "chapter": passthrough marker, no effect on event emission
     }
 
-    return [...emitted, ...this.dispatched];
+    return { events: [...emitted, ...this.dispatched], blockingStep: null };
+  }
+
+  getEvents(): InstallEvent[] {
+    return this.walk().events;
+  }
+
+  getBlockingStep(): ScenarioStep | null {
+    return this.walk().blockingStep;
   }
 }

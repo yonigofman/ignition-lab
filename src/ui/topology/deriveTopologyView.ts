@@ -24,6 +24,7 @@ export interface TopologyNodeView {
   etcdMember: boolean;
   active: boolean;
   removed: boolean;
+  highlighted: boolean;
 }
 
 export interface TopologyEdgeView {
@@ -122,7 +123,8 @@ export function deriveTopologyView(
   snapshot: ClusterSnapshot,
   topology: Scenario["topology"],
   events: InstallEvent[],
-  activeWindowSeconds = 2
+  activeWindowSeconds = 2,
+  highlightedNodeId: NodeId | null = null
 ): TopologyView {
   const windowEvents = events.filter((e) => e.t <= snapshot.t && e.t > snapshot.t - activeWindowSeconds);
   const activeIds = new Set(windowEvents.flatMap(eventParticipants));
@@ -142,6 +144,7 @@ export function deriveTopologyView(
       etcdMember: snapshot.etcdMembers.includes(topoNode.id),
       active: activeIds.has(topoNode.id),
       removed: topoNode.role === "bootstrap" && state.power === "off",
+      highlighted: topoNode.id === highlightedNodeId,
     };
   });
 

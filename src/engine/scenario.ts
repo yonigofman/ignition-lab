@@ -1,4 +1,4 @@
-import type { InstallEvent, NodeId } from "./events";
+import { maxEventTime, type InstallEvent, type NodeId } from "./events";
 import type { ClusterSnapshot, NodeRole } from "./snapshot";
 
 export interface TopologyNode {
@@ -24,7 +24,7 @@ export interface Scenario {
 export type ScenarioStep =
   | { kind: "event"; event: InstallEvent }
   | { kind: "gate"; gateId: string; prompt: string; check: (s: ClusterSnapshot) => boolean; hint?: string }
-  | { kind: "predict"; question: string; options: string[]; answer: number; explain: string }
+  | { kind: "predict"; id?: string; question: string; options: string[]; answer: number; explain: string }
   | { kind: "chapter"; title: string; lesson?: string };
 
 export interface FaultSpec {
@@ -38,4 +38,41 @@ export function applyFault(scenario: Scenario, fault: FaultSpec): Scenario {
     id: `${scenario.id}+${fault.id}`,
     steps: fault.rewrite(scenario.steps),
   };
+}
+
+export function scenarioDuration(scenario: Scenario): number {
+  const events = scenario.steps
+    .filter((step): step is ScenarioStep & { kind: "event" } => step.kind === "event")
+    .map((step) => step.event);
+  return maxEventTime(events);
+}
+
+export interface ChapterMarker {
+  title: string;
+  t: number;
+}
+
+export function scenarioChapters(scenario: Scenario): ChapterMarker[] {
+  const chapters: ChapterMarker[] = [];
+  let pendingTitles: string[] = [];
+  let lastEventT = 0;
+
+  for (const step of scenario.steps) {
+    if (step.kind === "chapter") {
+      pendingTitles.push(step.title);
+      continue;
+    }
+    if (step.kind === "event") {
+      for (const title of pendingTitles) {
+        chapters.push({ title, t: step.event.t });
+      }
+      pendingTitles = [];
+      lastEventT = step.event.t;
+    }
+  }
+  for (const title of pendingTitles) {
+    chapters.push({ title, t: lastEventT });
+  }
+
+  return chapters;
 }

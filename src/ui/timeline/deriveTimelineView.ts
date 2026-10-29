@@ -1,5 +1,5 @@
-import { maxEventTime, type InstallEvent } from "../../engine/events";
-import type { Scenario } from "../../engine/scenario";
+import type { InstallEvent } from "../../engine/events";
+import { scenarioChapters, scenarioDuration, type Scenario } from "../../engine/scenario";
 import { eventCategory, isFailureEvent, type EventCategory } from "../eventCategory";
 
 export interface TimelineMark {
@@ -23,7 +23,7 @@ export interface TimelineView {
 }
 
 export function deriveTimelineView(scenario: Scenario, events: InstallEvent[], currentT: number): TimelineView {
-  const durationT = maxEventTime(events);
+  const durationT = scenarioDuration(scenario);
 
   const ticks: TimelineTick[] = events.map((event, index) => ({
     id: `tick-${index}-${event.t}`,
@@ -32,25 +32,11 @@ export function deriveTimelineView(scenario: Scenario, events: InstallEvent[], c
     failed: isFailureEvent(event),
   }));
 
-  const marks: TimelineMark[] = [];
-  let pendingChapters: string[] = [];
-  let lastEventT = 0;
-  for (const step of scenario.steps) {
-    if (step.kind === "chapter") {
-      pendingChapters.push(step.title);
-      continue;
-    }
-    if (step.kind === "event") {
-      for (const title of pendingChapters) {
-        marks.push({ id: `chapter-${marks.length}`, t: step.event.t, title });
-      }
-      pendingChapters = [];
-      lastEventT = step.event.t;
-    }
-  }
-  for (const title of pendingChapters) {
-    marks.push({ id: `chapter-${marks.length}`, t: lastEventT, title });
-  }
+  const marks: TimelineMark[] = scenarioChapters(scenario).map((chapter, index) => ({
+    id: `chapter-${index}`,
+    t: chapter.t,
+    title: chapter.title,
+  }));
 
   return { durationT, scrubberT: currentT, marks, ticks };
 }

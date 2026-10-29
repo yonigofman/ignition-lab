@@ -1,0 +1,32 @@
+export const meta = {
+  title: "UPI prerequisites",
+  module: 1,
+  commands: ["dig", "curl"],
+};
+
+## What you own in a UPI install
+
+In UPI, nothing boots until *you've* set these up first:
+
+- **DNS** — `api.<cluster>.<base>` (external API), `api-int.<cluster>.<base>` (internal API, used by
+  nodes), and a wildcard `*.apps.<cluster>.<base>` for anything running behind the ingress router. Every
+  node also needs an A/PTR record.
+- **Load balancers** — an API load balancer fronting `6443` (the Kubernetes API) and `22623` (the
+  Machine Config Server, internal only), and an ingress load balancer fronting `80`/`443`.
+- **Helper/bastion** — DHCP or PXE, an HTTP server hosting the ignition files, DNS, and HAProxy all
+  usually live on one helper machine.
+
+## Checkpoint: check it yourself
+
+This simulator's DNS and load balancer records already exist before the install starts — try it in the
+terminal:
+
+```
+dig api-int.demo.lab.example.com
+dig test.apps.demo.lab.example.com
+```
+
+The first should resolve to the API load balancer; the second should resolve too, because of the
+`*.apps` wildcard record, even though `test` was never registered by name. If either came back
+`NXDOMAIN` on a real UPI install, nothing downstream would work — bootstrap and masters would loop
+forever trying to reach services that don't exist.

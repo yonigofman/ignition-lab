@@ -13,6 +13,19 @@ const steps: ScenarioStep[] = [
     event: { t: 10, type: "ignition.fetched", node: "bootstrap", file: "bootstrap.ign", from: "helper" },
   },
   { kind: "event", event: { t: 15, type: "bootstrap.temp_control_plane_up" } },
+  {
+    kind: "predict",
+    id: "predict-temp-control-plane",
+    question: "Now that bootstrap's temporary control plane is up, what happens next?",
+    options: [
+      "Masters boot, then fetch their pointer ignition and pull the full config via the MCS",
+      "The cluster is immediately ready for use",
+      "etcd scales to 3 members right away, before any master has booted",
+    ],
+    answer: 0,
+    explain:
+      "Masters boot from their pointer ignition (served by the helper), then pull the full machine config from bootstrap's Machine Config Server through the API load balancer.",
+  },
 
   { kind: "chapter", title: "Masters join" },
   { kind: "event", event: { t: 20, type: "vm.power", node: "master-0", state: "on" } },
@@ -48,6 +61,19 @@ const steps: ScenarioStep[] = [
     kind: "event",
     event: { t: 37, type: "ignition.mcs_served", node: "bootstrap", pool: "master", from: "master-2", via: "lb" },
   },
+  {
+    kind: "predict",
+    id: "predict-mcs-served",
+    question: "All three masters have pulled their full config via the MCS. What happens next?",
+    options: [
+      "The temporary control plane schedules the production control plane onto the masters",
+      "The masters immediately become Ready",
+      "Bootstrap is destroyed immediately",
+    ],
+    answer: 0,
+    explain:
+      "The temporary control plane running on bootstrap schedules the production control plane's components onto the masters.",
+  },
 
   { kind: "chapter", title: "Control plane comes up" },
   { kind: "event", event: { t: 40, type: "controlplane.pod_scheduled", node: "master-0", component: "etcd" } },
@@ -63,11 +89,30 @@ const steps: ScenarioStep[] = [
   { kind: "event", event: { t: 50, type: "etcd.member_joined", node: "master-0" } },
   { kind: "event", event: { t: 51, type: "etcd.member_joined", node: "master-1" } },
   { kind: "event", event: { t: 52, type: "etcd.member_joined", node: "master-2" } },
+  {
+    kind: "predict",
+    id: "predict-cvo-etcd",
+    question: "The CVO has started and etcd has scaled to 3 members. What happens next?",
+    options: [
+      "The temporary control plane hands over to the production control plane, and bootstrap reports complete",
+      "The install is immediately complete",
+      "Workers start booting",
+    ],
+    answer: 0,
+    explain:
+      "The temporary control plane hands over to the now-running production control plane, bootstrap injects the remaining OpenShift components, and openshift-install reports it's safe to remove the bootstrap resources.",
+  },
 
   { kind: "chapter", title: "Bootstrap complete" },
   { kind: "event", event: { t: 60, type: "bootstrap.complete" } },
-  { kind: "event", event: { t: 65, type: "lb.backend", frontend: 6443, backend: "bootstrap", state: "removed" } },
-  { kind: "event", event: { t: 66, type: "lb.backend", frontend: 22623, backend: "bootstrap", state: "removed" } },
+  {
+    kind: "gate",
+    gateId: "remove-bootstrap-from-lb",
+    prompt:
+      "Bootstrap has reported complete. Before it can be destroyed, remove it from both load balancer frontends.",
+    hint: "Run `lab lb rm 6443 bootstrap` and `lab lb rm 22623 bootstrap` in the terminal.",
+    check: (s) => s.lb[6443]?.bootstrap === "removed" && s.lb[22623]?.bootstrap === "removed",
+  },
   { kind: "event", event: { t: 70, type: "bootstrap.removed", node: "bootstrap" } },
 
   { kind: "chapter", title: "Masters register and converge" },

@@ -94,3 +94,39 @@ describe("SimulatorSource", () => {
     expect(events.map((e) => e.type)).toEqual(["cvo.started", "bootstrap.complete"]);
   });
 });
+
+describe("SimulatorSource.getBlockingStep", () => {
+  it("returns null when nothing is blocking", () => {
+    const source = new SimulatorSource({
+      id: "plain",
+      title: "Plain",
+      mode: "upi",
+      topology: { nodes: [], links: [] },
+      initialState: {},
+      steps: [{ kind: "event", event: { t: 0, type: "cvo.started" } }],
+    });
+    expect(source.getBlockingStep()).toBeNull();
+  });
+
+  it("returns the exact gate step blocking emission", () => {
+    const source = new SimulatorSource(scenarioWithGate());
+    expect(source.getBlockingStep()).toMatchObject({ kind: "gate", gateId: "approve-csr" });
+  });
+
+  it("returns the exact predict step blocking emission", () => {
+    const source = new SimulatorSource(scenarioWithPredict());
+    expect(source.getBlockingStep()).toMatchObject({ kind: "predict", question: "what happens next?" });
+  });
+
+  it("returns null again once the blocking gate is satisfied", () => {
+    const source = new SimulatorSource(scenarioWithGate());
+    source.dispatch({ t: 5, type: "csr.approved", id: "csr-1", by: "learner" });
+    expect(source.getBlockingStep()).toBeNull();
+  });
+
+  it("returns null again once the blocking predict is acknowledged", () => {
+    const source = new SimulatorSource(scenarioWithPredict());
+    source.acknowledge(1);
+    expect(source.getBlockingStep()).toBeNull();
+  });
+});

@@ -75,6 +75,16 @@ export const registry: Record<string, RegisteredCommand> = {
   },
 };
 
+let lessonCommands: string[] | null = null;
+
+export function setLessonCommands(names: string[] | null): void {
+  lessonCommands = names;
+}
+
+export function getLessonCommands(): string[] | null {
+  return lessonCommands;
+}
+
 export function runLine(line: string, snapshot: ClusterSnapshot): CommandResult {
   const [name, ...args] = parseLine(line);
   if (!name) {

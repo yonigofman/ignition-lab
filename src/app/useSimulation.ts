@@ -1,16 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Clock } from "../engine/clock";
 import { maxEventTime, type InstallEvent } from "../engine/events";
-import type { Scenario } from "../engine/scenario";
+import { scenarioDuration, type Scenario, type ScenarioStep } from "../engine/scenario";
 import { SimulatorSource } from "../engine/sources/SimulatorSource";
 import { createInitialSnapshot, type ClusterSnapshot } from "../engine/snapshot";
 
 export interface Simulation {
   scenario: Scenario;
   events: InstallEvent[];
+  blockingStep: ScenarioStep | null;
   snapshot: ClusterSnapshot;
   currentT: number;
   durationT: number;
+  availableDurationT: number;
   isPlaying: boolean;
   speed: number;
   play: () => void;
@@ -18,22 +20,27 @@ export interface Simulation {
   setSpeed: (speed: number) => void;
   seek: (t: number) => void;
   dispatch: (events: InstallEvent[]) => void;
+  acknowledge: (stepIndex: number) => void;
 }
 
 export function useSimulation(scenario: Scenario): Simulation {
-  const baseEvents = useMemo(() => new SimulatorSource(scenario).getEvents(), [scenario]);
-  const [dispatchedEvents, setDispatchedEvents] = useState<InstallEvent[]>([]);
-  const events = useMemo(() => [...baseEvents, ...dispatchedEvents], [baseEvents, dispatchedEvents]);
-  const durationT = useMemo(() => maxEventTime(events), [events]);
-
-  const clockRef = useRef<{ baseEvents: InstallEvent[]; clock: Clock }>();
-  // Keyed on baseEvents (scenario), not events (scenario + dispatched): only a scenario
-  // change should reset play/pause/speed/time; dispatched events just sync via setEvents below.
-  if (!clockRef.current || clockRef.current.baseEvents !== baseEvents) {
-    clockRef.current = { baseEvents, clock: new Clock(events, createInitialSnapshot(scenario.initialState)) };
+  const stateRef = useRef<{ scenario: Scenario; source: SimulatorSource; clock: Clock }>();
+  if (!stateRef.current || stateRef.current.scenario !== scenario) {
+    const source = new SimulatorSource(scenario);
+    stateRef.current = {
+      scenario,
+      source,
+      clock: new Clock(source.getEvents(), createInitialSnapshot(scenario.initialState)),
+    };
   }
-  const clock = clockRef.current.clock;
+  const { source, clock } = stateRef.current;
+
+  const events = source.getEvents();
+  const blockingStep = source.getBlockingStep();
   clock.setEvents(events);
+
+  const durationT = scenarioDuration(scenario);
+  const availableDurationT = maxEventTime(events);
 
   const [, forceRender] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -47,9 +54,9 @@ export function useSimulation(scenario: Scenario): Simulation {
     const tick = (timestamp: number) => {
       if (lastTimestamp !== null) {
         clock.tick((timestamp - lastTimestamp) / 1000);
-        if (clock.time >= durationT) {
+        if (clock.time >= availableDurationT) {
           clock.pause();
-          clock.seek(durationT);
+          clock.seek(availableDurationT);
           setIsPlaying(false);
         }
         forceRender((n) => n + 1);
@@ -60,14 +67,16 @@ export function useSimulation(scenario: Scenario): Simulation {
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [isPlaying, clock, durationT]);
+  }, [isPlaying, clock, availableDurationT]);
 
   return {
     scenario,
     events,
+    blockingStep,
     snapshot: clock.getSnapshot(),
     currentT: clock.time,
     durationT,
+    availableDurationT,
     isPlaying,
     speed,
     play: () => {
@@ -88,7 +97,12 @@ export function useSimulation(scenario: Scenario): Simulation {
     },
     dispatch: (newEvents: InstallEvent[]) => {
       if (newEvents.length === 0) return;
-      setDispatchedEvents((prev) => [...prev, ...newEvents]);
+      for (const event of newEvents) source.dispatch(event);
+      forceRender((n) => n + 1);
+    },
+    acknowledge: (stepIndex: number) => {
+      source.acknowledge(stepIndex);
+      forceRender((n) => n + 1);
     },
   };
 }

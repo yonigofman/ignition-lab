@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { reduceAll } from "../../src/engine/reducer";
 import { createInitialSnapshot } from "../../src/engine/snapshot";
-import { SimulatorSource } from "../../src/engine/sources/SimulatorSource";
 import { upiCompact3Node } from "../../src/scenarios/upi-compact-3node";
 import { deriveInspectorView } from "../../src/ui/inspector/deriveInspectorView";
+import { fullEventsFor } from "../helpers/fullScenarioEvents";
 
-const events = new SimulatorSource(upiCompact3Node).getEvents();
+const events = fullEventsFor(upiCompact3Node);
 
 function snapshotAt(t: number) {
   return reduceAll(events, t, createInitialSnapshot(upiCompact3Node.initialState));

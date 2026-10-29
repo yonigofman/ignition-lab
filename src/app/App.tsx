@@ -2,6 +2,9 @@ import { useState } from "react";
 import type { NodeId } from "../engine/events";
 import { upiCompact3Node } from "../scenarios/upi-compact-3node";
 import { Inspector } from "../ui/inspector/Inspector";
+import { LessonContext } from "../ui/lesson/LessonContext";
+import { LessonPanel } from "../ui/lesson/LessonPanel";
+import { deriveLessonState } from "../ui/lesson/deriveLessonState";
 import { TerminalPane } from "../ui/terminal/TerminalPane";
 import { Timeline } from "../ui/timeline/Timeline";
 import { TopologyCanvas } from "../ui/topology/TopologyCanvas";
@@ -11,8 +14,11 @@ import { useTheme } from "./useTheme";
 export function App() {
   const sim = useSimulation(upiCompact3Node);
   const [selectedNodeId, setSelectedNodeId] = useState<NodeId | null>(null);
+  const [highlightedNodeId, setHighlightedNodeId] = useState<NodeId | null>(null);
   const [theme, toggleTheme] = useTheme();
   const [terminalOpen, setTerminalOpen] = useState(false);
+
+  const lessonState = deriveLessonState(sim.scenario, sim.snapshot, sim.blockingStep);
 
   return (
     <div className="flex h-screen w-screen flex-col bg-(--bg) text-(--text)">
@@ -39,6 +45,24 @@ export function App() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
+        <LessonContext.Provider
+          value={{
+            scenario: sim.scenario,
+            events: sim.events,
+            snapshot: sim.snapshot,
+            currentT: sim.currentT,
+            isPlaying: sim.isPlaying,
+            lessonState,
+            play: sim.play,
+            pause: sim.pause,
+            dispatch: sim.dispatch,
+            acknowledge: sim.acknowledge,
+            setHighlightedNodeId,
+          }}
+        >
+          <LessonPanel />
+        </LessonContext.Provider>
+
         <main className="flex-1">
           <TopologyCanvas
             snapshot={sim.snapshot}
@@ -46,6 +70,7 @@ export function App() {
             events={sim.events}
             selectedNodeId={selectedNodeId}
             onSelectNode={setSelectedNodeId}
+            highlightedNodeId={highlightedNodeId}
           />
         </main>
 
