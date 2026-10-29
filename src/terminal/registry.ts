@@ -59,12 +59,13 @@ export const registry: Record<string, RegisteredCommand> = {
     run: journalctl,
   },
   lab: {
-    description: "[lab] simulator-only helpers to fix DNS/LB, not a real tool (dns add|rm, lb set|rm)",
+    description: "[lab] simulator-only helpers to fix DNS/LB/ignition, not a real tool (dns add|rm, lb set|rm, ignition regenerate)",
     usage: [
       "[lab] lab dns add <name> <ip>                      Add a DNS record",
       "[lab] lab dns rm <name>                             Remove a DNS record",
       "[lab] lab lb set <frontend> <backend> <state>       Set a load balancer backend's state (up|down|removed)",
       "[lab] lab lb rm <frontend> <backend>                Remove a load balancer backend",
+      "[lab] lab ignition regenerate [node]                 Regenerate ignition configs for a node (default: bootstrap)",
     ].join("\n"),
     run: lab,
   },

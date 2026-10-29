@@ -85,6 +85,31 @@ describe("lab lb", () => {
   });
 });
 
+describe("lab ignition", () => {
+  it("regenerate dispatches a learner.action followed by a successful ignition.fetched for bootstrap by default", () => {
+    const result = lab(["ignition", "regenerate"], snapshot);
+    expect(result.dispatch).toEqual([
+      { t: 42, type: "learner.action", action: "lab.ignition.regenerate", payload: { node: "bootstrap" } },
+      { t: 42, type: "ignition.fetched", node: "bootstrap", file: "bootstrap.ign", from: "helper" },
+    ]);
+    expect(result.output).toContain("[lab]");
+  });
+
+  it("regenerate accepts an explicit node", () => {
+    const result = lab(["ignition", "regenerate", "master-0"], snapshot);
+    expect(result.dispatch).toEqual([
+      { t: 42, type: "learner.action", action: "lab.ignition.regenerate", payload: { node: "master-0" } },
+      { t: 42, type: "ignition.fetched", node: "master-0", file: "bootstrap.ign", from: "helper" },
+    ]);
+  });
+
+  it("errors without dispatching for an unknown ignition subcommand", () => {
+    const result = lab(["ignition", "whatever"], snapshot);
+    expect(result.dispatch).toBeUndefined();
+    expect(result.output).toMatch(/usage/i);
+  });
+});
+
 describe("lab unknown subcommand", () => {
   it("prints a friendly error", () => {
     const result = lab(["wat"], snapshot);

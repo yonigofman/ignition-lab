@@ -1,6 +1,7 @@
 import type { InstallEvent } from "../events";
 import { reduceAll } from "../reducer";
 import type { Scenario, ScenarioStep } from "../scenario";
+import { createInitialSnapshot } from "../snapshot";
 import type { EventSource } from "./EventSource";
 
 export interface SimulatorSourceState {
@@ -37,7 +38,11 @@ export class SimulatorSource implements EventSource {
       }
 
       if (step.kind === "gate") {
-        const snapshot = reduceAll([...emitted, ...this.dispatched], Infinity);
+        const snapshot = reduceAll(
+          [...emitted, ...this.dispatched],
+          Infinity,
+          createInitialSnapshot(this.scenario.initialState)
+        );
         if (!step.check(snapshot)) {
           return { events: [...emitted, ...this.dispatched], blockingStep: step };
         }

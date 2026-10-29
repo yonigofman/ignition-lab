@@ -60,12 +60,36 @@ function lb(args: string[], snapshot: ClusterSnapshot): CommandResult {
   return { output: "usage: lab lb set <frontend> <backend> <state> | lab lb rm <frontend> <backend>" };
 }
 
+function ignition(args: string[], snapshot: ClusterSnapshot): CommandResult {
+  if (args[0] === "regenerate") {
+    const node = args[1] ?? "bootstrap";
+    // Re-fetching succeeds, same as any other ignition.fetched: this clears the
+    // node's "failed" phase so a gate can check real snapshot state instead of
+    // matching on rendered log text, matching how lab dns/lb already pair their
+    // learner.action with a structured domain event.
+    const event: InstallEvent = {
+      t: snapshot.t,
+      type: "ignition.fetched",
+      node,
+      file: "bootstrap.ign",
+      from: "helper",
+    };
+    return {
+      output: `[lab] ignition configs regenerated for ${node}`,
+      dispatch: [learnerAction(snapshot.t, "lab.ignition.regenerate", { node }), event],
+    };
+  }
+  return { output: "usage: lab ignition regenerate [node]" };
+}
+
 export const lab: Command = (args, snapshot) => {
   switch (args[0]) {
     case "dns":
       return dns(args.slice(1), snapshot);
     case "lb":
       return lb(args.slice(1), snapshot);
+    case "ignition":
+      return ignition(args.slice(1), snapshot);
     case undefined:
       return { output: registry.lab?.usage ?? "" };
     default:

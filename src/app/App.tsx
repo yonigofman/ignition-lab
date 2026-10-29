@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { NodeId } from "../engine/events";
-import { upiCompact3Node } from "../scenarios/upi-compact-3node";
 import { Inspector } from "../ui/inspector/Inspector";
 import { LessonContext } from "../ui/lesson/LessonContext";
 import { LessonPanel } from "../ui/lesson/LessonPanel";
@@ -8,11 +7,13 @@ import { deriveLessonState } from "../ui/lesson/deriveLessonState";
 import { TerminalPane } from "../ui/terminal/TerminalPane";
 import { Timeline } from "../ui/timeline/Timeline";
 import { TopologyCanvas } from "../ui/topology/TopologyCanvas";
+import { SCENARIO_OPTIONS } from "./scenarioOptions";
 import { useSimulation } from "./useSimulation";
 import { useTheme } from "./useTheme";
 
 export function App() {
-  const sim = useSimulation(upiCompact3Node);
+  const [scenarioIndex, setScenarioIndex] = useState(0);
+  const sim = useSimulation((SCENARIO_OPTIONS[scenarioIndex] ?? SCENARIO_OPTIONS[0]).scenario);
   const [selectedNodeId, setSelectedNodeId] = useState<NodeId | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<NodeId | null>(null);
   const [theme, toggleTheme] = useTheme();
@@ -27,6 +28,21 @@ export function App() {
           {sim.scenario.title}
         </h1>
         <div className="flex items-center gap-2">
+          <select
+            value={scenarioIndex}
+            onChange={(e) => {
+              setScenarioIndex(Number(e.target.value));
+              setSelectedNodeId(null);
+              setHighlightedNodeId(null);
+            }}
+            className="rounded border border-(--border) bg-(--surface) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
+          >
+            {SCENARIO_OPTIONS.map((option, index) => (
+              <option key={option.label} value={index}>
+                {option.label}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => setTerminalOpen((open) => !open)}

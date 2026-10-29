@@ -33,6 +33,20 @@ export function fullEventsFor(scenario: Scenario): InstallEvent[] {
       continue;
     }
 
+    if (blocking.kind === "gate" && blocking.gateId === "approve-worker-client-csrs") {
+      source.dispatch({ t: 112, type: "csr.approved", id: "csr-worker-0-client", by: "learner" });
+      source.dispatch({ t: 112, type: "csr.approved", id: "csr-worker-1-client", by: "learner" });
+      blocking = source.getBlockingStep();
+      continue;
+    }
+
+    if (blocking.kind === "gate" && blocking.gateId === "approve-worker-serving-csrs") {
+      source.dispatch({ t: 117, type: "csr.approved", id: "csr-worker-0-serving", by: "learner" });
+      source.dispatch({ t: 117, type: "csr.approved", id: "csr-worker-1-serving", by: "learner" });
+      blocking = source.getBlockingStep();
+      continue;
+    }
+
     throw new Error(`fullEventsFor: don't know how to satisfy blocking step: ${JSON.stringify(blocking)}`);
   }
 

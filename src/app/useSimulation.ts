@@ -104,11 +104,15 @@ export function useSimulation(scenario: Scenario): Simulation {
     },
     dispatch: (newEvents: InstallEvent[]) => {
       if (newEvents.length === 0) return;
-      const wasBlocked = source.getBlockingStep() !== null;
+      const before = source.getBlockingStep();
       for (const event of newEvents) source.dispatch(event);
-      const stillBlocked = source.getBlockingStep() !== null;
+      const after = source.getBlockingStep();
 
-      if (stalledAtBoundaryRef.current && wasBlocked && !stillBlocked) {
+      // Resume whenever the blocker changed - cleared entirely, or moved on to
+      // a later gate/predict further down the scenario (a scenario can have
+      // several gates in sequence; clearing one just reveals the next, so
+      // "no longer blocked at all" is too strict a condition to resume on).
+      if (stalledAtBoundaryRef.current && before !== null && before !== after) {
         stalledAtBoundaryRef.current = false;
         clock.play();
         setIsPlaying(true);
