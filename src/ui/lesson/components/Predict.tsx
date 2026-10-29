@@ -6,7 +6,7 @@ export interface PredictProps {
 }
 
 export function Predict({ id }: PredictProps) {
-  const { scenario, lessonState, acknowledge } = useLesson();
+  const { scenario, currentT, lessonState, acknowledge, dispatch } = useLesson();
   const [picked, setPicked] = useState<number | null>(null);
 
   const stepIndex = scenario.steps.findIndex((s) => s.kind === "predict" && s.id === id);
@@ -39,6 +39,14 @@ export function Predict({ id }: PredictProps) {
               disabled={picked !== null}
               onClick={() => {
                 setPicked(index);
+                dispatch([
+                  {
+                    t: currentT,
+                    type: "learner.action",
+                    action: "predict.answer",
+                    payload: { id, picked: index, correct: index === step.answer },
+                  },
+                ]);
                 acknowledge(stepIndex);
               }}
               className={`rounded border px-3 py-1.5 text-left text-xs ${

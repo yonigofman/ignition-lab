@@ -130,3 +130,12 @@ describe("SimulatorSource.getBlockingStep", () => {
     expect(source.getBlockingStep()).toBeNull();
   });
 });
+
+describe("SimulatorSource.getState", () => {
+  it("matches getEvents()/getBlockingStep() in a single call", () => {
+    const source = new SimulatorSource(scenarioWithGate());
+    const state = source.getState();
+    expect(state.events).toEqual(source.getEvents());
+    expect(state.blockingStep).toEqual(source.getBlockingStep());
+  });
+});

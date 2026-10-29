@@ -3,10 +3,12 @@ import { reduceAll } from "../reducer";
 import type { Scenario, ScenarioStep } from "../scenario";
 import type { EventSource } from "./EventSource";
 
-interface Walk {
+export interface SimulatorSourceState {
   events: InstallEvent[];
   blockingStep: ScenarioStep | null;
 }
+
+type Walk = SimulatorSourceState;
 
 export class SimulatorSource implements EventSource {
   private readonly dispatched: InstallEvent[] = [];
@@ -53,6 +55,10 @@ export class SimulatorSource implements EventSource {
     }
 
     return { events: [...emitted, ...this.dispatched], blockingStep: null };
+  }
+
+  getState(): SimulatorSourceState {
+    return this.walk();
   }
 
   getEvents(): InstallEvent[] {

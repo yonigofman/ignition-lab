@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import { setLessonCommands } from "../../terminal/registry";
-import Lesson0 from "../../lessons/00-concepts.mdx";
-import Lesson1 from "../../lessons/01-upi-prerequisites.mdx";
-import Lesson2 from "../../lessons/02-install-config-to-ignition.mdx";
+import Lesson0, { meta as lesson0Meta } from "../../lessons/00-concepts.mdx";
+import Lesson1, { meta as lesson1Meta } from "../../lessons/01-upi-prerequisites.mdx";
+import Lesson2, { meta as lesson2Meta } from "../../lessons/02-install-config-to-ignition.mdx";
 import Lesson3, { meta as lesson3Meta } from "../../lessons/03-bootstrap-dance.mdx";
-import { meta as lesson0Meta } from "../../lessons/00-concepts.mdx";
-import { meta as lesson1Meta } from "../../lessons/01-upi-prerequisites.mdx";
-import { meta as lesson2Meta } from "../../lessons/02-install-config-to-ignition.mdx";
+import { setLessonCommands } from "../../terminal/registry";
 
 interface LessonMeta {
   title: string;

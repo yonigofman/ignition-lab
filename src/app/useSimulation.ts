@@ -35,8 +35,7 @@ export function useSimulation(scenario: Scenario): Simulation {
   }
   const { source, clock } = stateRef.current;
 
-  const events = source.getEvents();
-  const blockingStep = source.getBlockingStep();
+  const { events, blockingStep } = source.getState();
   clock.setEvents(events);
 
   const durationT = scenarioDuration(scenario);
@@ -45,6 +44,10 @@ export function useSimulation(scenario: Scenario): Simulation {
   const [, forceRender] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeedState] = useState(1);
+  // True once the clock has auto-paused because it ran out of currently-available
+  // (possibly gate-truncated) events, as opposed to the user clicking Pause. Only in
+  // that state does clearing the block (via dispatch) resume playback on its own.
+  const stalledAtBoundaryRef = useRef(false);
 
   useEffect(() => {
     if (!isPlaying) return;
@@ -58,6 +61,7 @@ export function useSimulation(scenario: Scenario): Simulation {
           clock.pause();
           clock.seek(availableDurationT);
           setIsPlaying(false);
+          stalledAtBoundaryRef.current = true;
         }
         forceRender((n) => n + 1);
       }
@@ -80,10 +84,12 @@ export function useSimulation(scenario: Scenario): Simulation {
     isPlaying,
     speed,
     play: () => {
+      stalledAtBoundaryRef.current = false;
       clock.play();
       setIsPlaying(true);
     },
     pause: () => {
+      stalledAtBoundaryRef.current = false;
       clock.pause();
       setIsPlaying(false);
     },
@@ -92,12 +98,21 @@ export function useSimulation(scenario: Scenario): Simulation {
       setSpeedState(next);
     },
     seek: (t: number) => {
+      stalledAtBoundaryRef.current = false;
       clock.seek(t);
       forceRender((n) => n + 1);
     },
     dispatch: (newEvents: InstallEvent[]) => {
       if (newEvents.length === 0) return;
+      const wasBlocked = source.getBlockingStep() !== null;
       for (const event of newEvents) source.dispatch(event);
+      const stillBlocked = source.getBlockingStep() !== null;
+
+      if (stalledAtBoundaryRef.current && wasBlocked && !stillBlocked) {
+        stalledAtBoundaryRef.current = false;
+        clock.play();
+        setIsPlaying(true);
+      }
       forceRender((n) => n + 1);
     },
     acknowledge: (stepIndex: number) => {
