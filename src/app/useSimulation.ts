@@ -3,7 +3,7 @@ import { Clock } from "../engine/clock";
 import { maxEventTime, type InstallEvent } from "../engine/events";
 import type { Scenario } from "../engine/scenario";
 import { SimulatorSource } from "../engine/sources/SimulatorSource";
-import type { ClusterSnapshot } from "../engine/snapshot";
+import { createInitialSnapshot, type ClusterSnapshot } from "../engine/snapshot";
 
 export interface Simulation {
   scenario: Scenario;
@@ -17,16 +17,23 @@ export interface Simulation {
   pause: () => void;
   setSpeed: (speed: number) => void;
   seek: (t: number) => void;
+  dispatch: (events: InstallEvent[]) => void;
 }
 
 export function useSimulation(scenario: Scenario): Simulation {
-  const events = useMemo(() => new SimulatorSource(scenario).getEvents(), [scenario]);
+  const baseEvents = useMemo(() => new SimulatorSource(scenario).getEvents(), [scenario]);
+  const [dispatchedEvents, setDispatchedEvents] = useState<InstallEvent[]>([]);
+  const events = useMemo(() => [...baseEvents, ...dispatchedEvents], [baseEvents, dispatchedEvents]);
   const durationT = useMemo(() => maxEventTime(events), [events]);
-  const clockRef = useRef<{ events: InstallEvent[]; clock: Clock }>();
-  if (!clockRef.current || clockRef.current.events !== events) {
-    clockRef.current = { events, clock: new Clock(events) };
+
+  const clockRef = useRef<{ baseEvents: InstallEvent[]; clock: Clock }>();
+  // Keyed on baseEvents (scenario), not events (scenario + dispatched): only a scenario
+  // change should reset play/pause/speed/time; dispatched events just sync via setEvents below.
+  if (!clockRef.current || clockRef.current.baseEvents !== baseEvents) {
+    clockRef.current = { baseEvents, clock: new Clock(events, createInitialSnapshot(scenario.initialState)) };
   }
   const clock = clockRef.current.clock;
+  clock.setEvents(events);
 
   const [, forceRender] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -78,6 +85,10 @@ export function useSimulation(scenario: Scenario): Simulation {
     seek: (t: number) => {
       clock.seek(t);
       forceRender((n) => n + 1);
+    },
+    dispatch: (newEvents: InstallEvent[]) => {
+      if (newEvents.length === 0) return;
+      setDispatchedEvents((prev) => [...prev, ...newEvents]);
     },
   };
 }

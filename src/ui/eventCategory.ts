@@ -8,6 +8,7 @@ export function eventCategory(event: InstallEvent): EventCategory {
     case "vm.reboot":
     case "dhcp.lease":
     case "dns.query":
+    case "dns.record":
     case "lb.backend":
     case "bmc.power":
       return "infra";

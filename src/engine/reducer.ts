@@ -28,6 +28,8 @@ function renderLogLine(event: InstallEvent): string {
       return `${event.node} leased ${event.ip}`;
     case "dns.query":
       return `${event.from} queried ${event.name} -> ${event.result}`;
+    case "dns.record":
+      return event.action === "add" ? `dns record added: ${event.name} -> ${event.ip}` : `dns record removed: ${event.name}`;
     case "lb.backend":
       return `lb:${event.frontend} backend ${event.backend} ${event.state}`;
     case "bmc.power":
@@ -98,6 +100,15 @@ export function reduce(snapshot: ClusterSnapshot, event: InstallEvent): ClusterS
       break;
     case "dns.query":
       break;
+    case "dns.record":
+      next = {
+        ...next,
+        dns:
+          event.action === "add"
+            ? { ...next.dns, [event.name]: event.ip ?? "" }
+            : Object.fromEntries(Object.entries(next.dns).filter(([name]) => name !== event.name)),
+      };
+      break;
     case "lb.backend":
       next = {
         ...next,
@@ -147,7 +158,11 @@ export function reduce(snapshot: ClusterSnapshot, event: InstallEvent): ClusterS
       }
       break;
     case "node.registered":
-      next = updateNode(next, event.node, (n) => ({ ...n, role: event.role }));
+      next = updateNode(next, event.node, (n) => ({
+        ...n,
+        role: event.role,
+        registeredAt: n.registeredAt ?? event.t,
+      }));
       break;
     case "node.ready":
       next = updateNode(next, event.node, (n) => ({
@@ -159,7 +174,10 @@ export function reduce(snapshot: ClusterSnapshot, event: InstallEvent): ClusterS
     case "csr.created":
       next = {
         ...next,
-        csrs: [...next.csrs, { id: event.id, node: event.node, kind: event.kind, status: "pending" }],
+        csrs: [
+          ...next.csrs,
+          { id: event.id, node: event.node, kind: event.kind, status: "pending", createdAt: event.t },
+        ],
       };
       break;
     case "csr.approved":
@@ -180,6 +198,7 @@ export function reduce(snapshot: ClusterSnapshot, event: InstallEvent): ClusterS
             available: event.available,
             progressing: event.progressing,
             degraded: event.degraded,
+            since: next.clusterOperators[event.name]?.since ?? event.t,
           },
         },
       };

@@ -16,6 +16,7 @@
     "onlyBuiltDependencies": ["esbuild"]
   },
   "dependencies": {
+    "@xterm/xterm": "^5.5.0",
     "@xyflow/react": "^12.3.5",
     "motion": "^11.11.17",
     "react": "^18.3.1",

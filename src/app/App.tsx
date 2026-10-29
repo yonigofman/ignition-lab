@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { NodeId } from "../engine/events";
 import { upiCompact3Node } from "../scenarios/upi-compact-3node";
 import { Inspector } from "../ui/inspector/Inspector";
+import { TerminalPane } from "../ui/terminal/TerminalPane";
 import { Timeline } from "../ui/timeline/Timeline";
 import { TopologyCanvas } from "../ui/topology/TopologyCanvas";
 import { useSimulation } from "./useSimulation";
@@ -11,6 +12,7 @@ export function App() {
   const sim = useSimulation(upiCompact3Node);
   const [selectedNodeId, setSelectedNodeId] = useState<NodeId | null>(null);
   const [theme, toggleTheme] = useTheme();
+  const [terminalOpen, setTerminalOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-screen flex-col bg-(--bg) text-(--text)">
@@ -18,13 +20,22 @@ export function App() {
         <h1 className="text-sm font-semibold uppercase tracking-wide text-(--text-muted)">
           {sim.scenario.title}
         </h1>
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
-        >
-          {theme === "dark" ? "Light mode" : "Dark mode"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTerminalOpen((open) => !open)}
+            className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
+          >
+            {terminalOpen ? "Hide terminal" : "Terminal"}
+          </button>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
+          >
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
@@ -40,6 +51,12 @@ export function App() {
 
         <Inspector snapshot={sim.snapshot} events={sim.events} selectedNodeId={selectedNodeId} />
       </div>
+
+      {terminalOpen && (
+        <div className="h-64 border-t border-(--border)">
+          <TerminalPane snapshot={sim.snapshot} onDispatch={sim.dispatch} />
+        </div>
+      )}
 
       <Timeline
         scenario={sim.scenario}

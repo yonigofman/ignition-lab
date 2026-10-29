@@ -1,13 +1,23 @@
 import type { InstallEvent } from "./events";
 import { reduceAll } from "./reducer";
-import type { ClusterSnapshot } from "./snapshot";
+import { createInitialSnapshot, type ClusterSnapshot } from "./snapshot";
 
 export class Clock {
   private t = 0;
   private speed = 1;
   private playing = false;
 
-  constructor(private readonly events: InstallEvent[]) {}
+  private events: InstallEvent[];
+  private readonly initialSnapshot: ClusterSnapshot;
+
+  constructor(events: InstallEvent[], initialSnapshot: ClusterSnapshot = createInitialSnapshot()) {
+    this.events = events;
+    this.initialSnapshot = initialSnapshot;
+  }
+
+  setEvents(events: InstallEvent[]): void {
+    this.events = events;
+  }
 
   play(): void {
     this.playing = true;
@@ -40,6 +50,6 @@ export class Clock {
   }
 
   getSnapshot(): ClusterSnapshot {
-    return reduceAll(this.events, this.t);
+    return reduceAll(this.events, this.t, this.initialSnapshot);
   }
 }

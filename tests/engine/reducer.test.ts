@@ -148,10 +148,19 @@ describe("reduce", () => {
       s0,
       at({ t: 1, type: "csr.created", id: "csr-1", node: "worker-0", kind: "client" })
     );
-    expect(s1.csrs).toEqual([{ id: "csr-1", node: "worker-0", kind: "client", status: "pending" }]);
+    expect(s1.csrs).toEqual([
+      { id: "csr-1", node: "worker-0", kind: "client", status: "pending", createdAt: 1 },
+    ]);
     const s2 = reduce(s1, at({ t: 2, type: "csr.approved", id: "csr-1", by: "learner" }));
     expect(s2.csrs).toEqual([
-      { id: "csr-1", node: "worker-0", kind: "client", status: "approved", approvedBy: "learner" },
+      {
+        id: "csr-1",
+        node: "worker-0",
+        kind: "client",
+        status: "approved",
+        approvedBy: "learner",
+        createdAt: 1,
+      },
     ]);
   });
 
@@ -166,7 +175,37 @@ describe("reduce", () => {
       available: true,
       progressing: false,
       degraded: false,
+      since: 1,
     });
+  });
+
+  it("co.status preserves since across later updates to the same operator", () => {
+    const s0 = createInitialSnapshot();
+    const s1 = reduce(
+      s0,
+      at({ t: 1, type: "co.status", name: "etcd", available: false, progressing: true, degraded: false })
+    );
+    const s2 = reduce(
+      s1,
+      at({ t: 50, type: "co.status", name: "etcd", available: true, progressing: false, degraded: false })
+    );
+    expect(s2.clusterOperators.etcd?.since).toBe(1);
+  });
+
+  it("node.registered sets registeredAt once and does not move it on later events", () => {
+    const s0 = createInitialSnapshot();
+    const s1 = reduce(s0, at({ t: 5, type: "node.registered", node: "master-0", role: "master" }));
+    expect(s1.nodes["master-0"]?.registeredAt).toBe(5);
+    const s2 = reduce(s1, at({ t: 10, type: "node.ready", node: "master-0", ready: true }));
+    expect(s2.nodes["master-0"]?.registeredAt).toBe(5);
+  });
+
+  it("dns.record add sets a record and remove deletes it", () => {
+    const s0 = createInitialSnapshot();
+    const s1 = reduce(s0, at({ t: 1, type: "dns.record", name: "api-int.lab", ip: "10.0.0.5", action: "add" }));
+    expect(s1.dns["api-int.lab"]).toBe("10.0.0.5");
+    const s2 = reduce(s1, at({ t: 2, type: "dns.record", name: "api-int.lab", action: "remove" }));
+    expect(s2.dns["api-int.lab"]).toBeUndefined();
   });
 
   it("install.complete and install.failed set phase and failureReason", () => {

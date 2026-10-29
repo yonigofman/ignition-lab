@@ -10,6 +10,7 @@ export type InstallPhase =
   | "complete"
   | "failed";
 export type LbFrontend = 6443 | 22623 | 80 | 443;
+export const LB_FRONTENDS: LbFrontend[] = [6443, 22623, 80, 443];
 export type LbBackendState = "up" | "down" | "removed";
 export type CsrStatus = "pending" | "approved";
 
@@ -24,6 +25,7 @@ export interface NodeState {
   rebootCount: number;
   lastRebootReason?: RebootReason;
   ready: boolean;
+  registeredAt?: number;
 }
 
 export interface Csr {
@@ -32,6 +34,7 @@ export interface Csr {
   kind: "client" | "serving";
   status: CsrStatus;
   approvedBy?: "auto" | "learner" | "machine-approver";
+  createdAt: number;
 }
 
 export interface ClusterOperatorStatus {
@@ -39,6 +42,7 @@ export interface ClusterOperatorStatus {
   available: boolean;
   progressing: boolean;
   degraded: boolean;
+  since: number;
 }
 
 export interface ClusterSnapshot {

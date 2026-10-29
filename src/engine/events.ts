@@ -15,6 +15,7 @@ export type InstallEvent =
   | (BaseEvent & { type: "vm.reboot"; node: NodeId; reason: "install-to-disk" | "mcd-pivot" | "other" })
   | (BaseEvent & { type: "dhcp.lease"; node: NodeId; ip: string })
   | (BaseEvent & { type: "dns.query"; from: NodeId; name: string; result: "ok" | "nxdomain" })
+  | (BaseEvent & { type: "dns.record"; name: string; ip?: string; action: "add" | "remove" })
   | (BaseEvent & {
       type: "lb.backend";
       frontend: 6443 | 22623 | 80 | 443;

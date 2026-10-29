@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Clock } from "../../src/engine/clock";
 import type { InstallEvent } from "../../src/engine/events";
+import { createInitialSnapshot } from "../../src/engine/snapshot";
 
 const events: InstallEvent[] = [
   { t: 0, type: "vm.power", node: "bootstrap", state: "on" },
@@ -69,5 +70,33 @@ describe("Clock", () => {
     const clock = new Clock(events);
     expect(() => clock.setSpeed(0)).toThrow();
     expect(() => clock.setSpeed(-1)).toThrow();
+  });
+
+  it("setEvents reflects newly appended events at or after their t", () => {
+    const clock = new Clock(events);
+    clock.seek(20);
+    expect(clock.getSnapshot().csrs).toEqual([]);
+
+    clock.setEvents([
+      ...events,
+      { t: 15, type: "csr.created", id: "csr-1", node: "worker-0", kind: "client" },
+    ]);
+    expect(clock.getSnapshot().csrs).toHaveLength(1);
+  });
+
+  it("setEvents does not disturb the snapshot for times before the appended event", () => {
+    const clock = new Clock(events);
+    clock.setEvents([
+      ...events,
+      { t: 15, type: "csr.created", id: "csr-1", node: "worker-0", kind: "client" },
+    ]);
+    clock.seek(10);
+    expect(clock.getSnapshot().csrs).toEqual([]);
+    expect(clock.getSnapshot().nodes.bootstrap).toMatchObject({ power: "on", ready: true });
+  });
+
+  it("seeds getSnapshot from the scenario's initial state (e.g. pre-configured DNS/LB)", () => {
+    const clock = new Clock(events, createInitialSnapshot({ dns: { "api-int.lab": "10.0.0.1" } }));
+    expect(clock.getSnapshot().dns).toEqual({ "api-int.lab": "10.0.0.1" });
   });
 });
