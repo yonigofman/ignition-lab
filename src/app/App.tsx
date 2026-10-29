@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { NodeId } from "../engine/events";
+import { BlockingBanner } from "../ui/blocking/BlockingBanner";
 import { Inspector } from "../ui/inspector/Inspector";
 import { LessonContext } from "../ui/lesson/LessonContext";
 import { LessonPanel } from "../ui/lesson/LessonPanel";
@@ -98,6 +99,8 @@ export function App() {
           <TerminalPane snapshot={sim.snapshot} theme={theme} onDispatch={sim.dispatch} />
         </div>
       )}
+
+      <BlockingBanner lessonState={lessonState} />
 
       <Timeline
         scenario={sim.scenario}
