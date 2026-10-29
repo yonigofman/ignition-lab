@@ -18,6 +18,7 @@ function scenarioWithGateAfterT(gateCutoffT: number): Scenario {
       },
       { kind: "event", event: { t: gateCutoffT, type: "install.complete" } },
     ],
+    artifacts: [],
   };
 }
 
@@ -34,6 +35,7 @@ describe("scenarioDuration", () => {
       topology: { nodes: [], links: [] },
       initialState: {},
       steps: [{ kind: "chapter", title: "only a chapter" }],
+      artifacts: [],
     };
     expect(scenarioDuration(scenario)).toBe(0);
   });

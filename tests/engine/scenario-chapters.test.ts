@@ -15,6 +15,7 @@ const scenario: Scenario = {
     { kind: "event", event: { t: 20, type: "install.complete" } },
     { kind: "chapter", title: "Trailing chapter with no following event" },
   ],
+  artifacts: [],
 };
 
 describe("scenarioChapters", () => {

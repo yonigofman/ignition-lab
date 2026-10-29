@@ -12,6 +12,14 @@ export interface TopologyLink {
   target: NodeId;
 }
 
+export interface ScenarioArtifact {
+  id: string;
+  path: string;
+  language: "yaml" | "json" | "text";
+  content: string;
+  note?: string;
+}
+
 export interface Scenario {
   id: string;
   title: string;
@@ -19,6 +27,7 @@ export interface Scenario {
   topology: { nodes: TopologyNode[]; links: TopologyLink[] };
   initialState: Partial<ClusterSnapshot>;
   steps: ScenarioStep[];
+  artifacts: ScenarioArtifact[];
 }
 
 export type ScenarioStep =

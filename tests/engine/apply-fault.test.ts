@@ -11,6 +11,7 @@ const baseScenario: Scenario = {
     { kind: "event", event: { t: 0, type: "dns.query", from: "master-0", name: "api-int.lab", result: "ok" } },
     { kind: "event", event: { t: 1, type: "cvo.started" } },
   ],
+  artifacts: [],
 };
 
 describe("applyFault", () => {

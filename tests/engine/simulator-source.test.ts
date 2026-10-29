@@ -20,6 +20,7 @@ function scenarioWithGate(): Scenario {
       },
       { kind: "event", event: { t: 10, type: "node.ready", node: "worker-0", ready: true } },
     ],
+    artifacts: [],
   };
 }
 
@@ -41,6 +42,7 @@ function scenarioWithPredict(): Scenario {
       },
       { kind: "event", event: { t: 5, type: "bootstrap.complete" } },
     ],
+    artifacts: [],
   };
 }
 
@@ -57,6 +59,7 @@ describe("SimulatorSource", () => {
         { kind: "chapter", title: "chapter 1" },
         { kind: "event", event: { t: 1, type: "bootstrap.complete" } },
       ],
+      artifacts: [],
     });
 
     expect(source.getEvents()).toHaveLength(2);
@@ -104,6 +107,7 @@ describe("SimulatorSource.getBlockingStep", () => {
       topology: { nodes: [], links: [] },
       initialState: {},
       steps: [{ kind: "event", event: { t: 0, type: "cvo.started" } }],
+      artifacts: [],
     });
     expect(source.getBlockingStep()).toBeNull();
   });

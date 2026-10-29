@@ -16,6 +16,7 @@ export interface LessonContextValue {
   dispatch: (events: InstallEvent[]) => void;
   acknowledge: (stepIndex: number) => void;
   setHighlightedNodeId: (id: NodeId | null) => void;
+  setOpenArtifactId: (id: string | null) => void;
 }
 
 export const LessonContext = createContext<LessonContextValue | null>(null);

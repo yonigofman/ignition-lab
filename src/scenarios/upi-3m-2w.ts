@@ -1,9 +1,21 @@
 import type { Scenario, ScenarioStep } from "../engine/scenario";
+import { buildStandardArtifacts } from "./standardArtifacts";
 
 const BASE_DOMAIN = "lab.example.com";
 const CLUSTER = "demo";
 const MASTERS = ["master-0", "master-1", "master-2"];
 const WORKERS = ["worker-0", "worker-1"];
+
+const artifacts = buildStandardArtifacts({
+  cluster: CLUSTER,
+  baseDomain: BASE_DOMAIN,
+  computeReplicas: 2,
+  mastersSchedulable: false,
+  clusterId: "7b4e1f20-6a3c-4d8b-a1e5-2c9f7b3e4a10",
+  infraId: `${CLUSTER}-4m2pz`,
+  workerIgnitionNote:
+    "A pointer config, same idea as master.ign. By the time workers fetch the real config from this URL, bootstrap is already gone — it's the running control plane's own Machine Config Server answering now.",
+});
 
 const steps: ScenarioStep[] = [
   { kind: "chapter", title: "Bootstrap boots" },
@@ -268,4 +280,5 @@ export const upi3m2w: Scenario = {
     },
   },
   steps,
+  artifacts,
 };

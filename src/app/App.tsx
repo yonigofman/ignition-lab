@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { NodeId } from "../engine/events";
+import { ArtifactsPanel } from "../ui/artifacts/ArtifactsPanel";
 import { BlockingBanner } from "../ui/blocking/BlockingBanner";
 import { Inspector } from "../ui/inspector/Inspector";
 import { LessonContext } from "../ui/lesson/LessonContext";
@@ -19,6 +20,8 @@ export function App() {
   const [highlightedNodeId, setHighlightedNodeId] = useState<NodeId | null>(null);
   const [theme, toggleTheme] = useTheme();
   const [terminalOpen, setTerminalOpen] = useState(false);
+  const [filesOpen, setFilesOpen] = useState(false);
+  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
 
   const lessonState = deriveLessonState(sim.scenario, sim.snapshot, sim.blockingStep);
 
@@ -53,6 +56,13 @@ export function App() {
           </button>
           <button
             type="button"
+            onClick={() => setFilesOpen((open) => !open)}
+            className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
+          >
+            {filesOpen ? "Hide files" : "Files"}
+          </button>
+          <button
+            type="button"
             onClick={toggleTheme}
             className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
           >
@@ -75,6 +85,10 @@ export function App() {
             dispatch: sim.dispatch,
             acknowledge: sim.acknowledge,
             setHighlightedNodeId,
+            setOpenArtifactId: (id) => {
+              setSelectedArtifactId(id);
+              setFilesOpen(id !== null);
+            },
           }}
         >
           <LessonPanel />
@@ -98,6 +112,15 @@ export function App() {
         <div className="h-64 shrink-0 overflow-hidden border-t border-(--border)">
           <TerminalPane snapshot={sim.snapshot} theme={theme} onDispatch={sim.dispatch} />
         </div>
+      )}
+
+      {filesOpen && (
+        <ArtifactsPanel
+          artifacts={sim.scenario.artifacts}
+          selectedId={selectedArtifactId}
+          onSelect={setSelectedArtifactId}
+          onClose={() => setFilesOpen(false)}
+        />
       )}
 
       <BlockingBanner lessonState={lessonState} />

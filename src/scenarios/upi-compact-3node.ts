@@ -1,8 +1,20 @@
 import type { Scenario, ScenarioStep } from "../engine/scenario";
+import { buildStandardArtifacts } from "./standardArtifacts";
 
 const BASE_DOMAIN = "lab.example.com";
 const CLUSTER = "demo";
 const MASTERS = ["master-0", "master-1", "master-2"];
+
+const artifacts = buildStandardArtifacts({
+  cluster: CLUSTER,
+  baseDomain: BASE_DOMAIN,
+  computeReplicas: 0,
+  mastersSchedulable: true,
+  clusterId: "3f2a9c10-5e4b-4f7a-9c1d-8b2e4a6f0d12",
+  infraId: `${CLUSTER}-7x9kq`,
+  workerIgnitionNote:
+    "A pointer config, same idea as master.ign. This scenario has no workers, but create ignition-configs always writes one.",
+});
 
 const steps: ScenarioStep[] = [
   { kind: "chapter", title: "Bootstrap boots" },
@@ -191,4 +203,5 @@ export const upiCompact3Node: Scenario = {
     },
   },
   steps,
+  artifacts,
 };
