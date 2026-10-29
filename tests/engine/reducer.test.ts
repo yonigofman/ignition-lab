@@ -22,12 +22,16 @@ describe("reduce", () => {
     expect(s2.nodes.bootstrap).toMatchObject({ power: "off", phase: "off" });
   });
 
-  it("vm.reboot increments rebootCount and sets phase booting", () => {
+  it("vm.reboot increments rebootCount, records the reason, and sets phase booting", () => {
     const s0 = createInitialSnapshot();
     const s1 = reduce(s0, at({ t: 1, type: "vm.reboot", node: "master-0", reason: "install-to-disk" }));
-    expect(s1.nodes["master-0"]).toMatchObject({ rebootCount: 1, phase: "booting" });
+    expect(s1.nodes["master-0"]).toMatchObject({
+      rebootCount: 1,
+      phase: "booting",
+      lastRebootReason: "install-to-disk",
+    });
     const s2 = reduce(s1, at({ t: 2, type: "vm.reboot", node: "master-0", reason: "mcd-pivot" }));
-    expect(s2.nodes["master-0"]).toMatchObject({ rebootCount: 2 });
+    expect(s2.nodes["master-0"]).toMatchObject({ rebootCount: 2, lastRebootReason: "mcd-pivot" });
   });
 
   it("dhcp.lease sets node ip", () => {

@@ -1,16 +1,12 @@
 import type { InstallEvent, NodeId } from "./events";
-import { createInitialSnapshot, type ClusterSnapshot, type NodeState } from "./snapshot";
-
-function defaultNode(id: NodeId): NodeState {
-  return { id, power: "off", phase: "off", rebootCount: 0, ready: false };
-}
+import { createInitialSnapshot, defaultNodeState, type ClusterSnapshot, type NodeState } from "./snapshot";
 
 function updateNode(
   snapshot: ClusterSnapshot,
   nodeId: NodeId,
   update: (node: NodeState) => NodeState
 ): ClusterSnapshot {
-  const existing = snapshot.nodes[nodeId] ?? defaultNode(nodeId);
+  const existing = snapshot.nodes[nodeId] ?? defaultNodeState(nodeId);
   return {
     ...snapshot,
     nodes: { ...snapshot.nodes, [nodeId]: update(existing) },
@@ -93,6 +89,7 @@ export function reduce(snapshot: ClusterSnapshot, event: InstallEvent): ClusterS
       next = updateNode(next, event.node, (n) => ({
         ...n,
         rebootCount: n.rebootCount + 1,
+        lastRebootReason: event.reason,
         phase: "booting",
       }));
       break;

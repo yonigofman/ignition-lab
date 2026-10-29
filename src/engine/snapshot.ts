@@ -13,6 +13,8 @@ export type LbFrontend = 6443 | 22623 | 80 | 443;
 export type LbBackendState = "up" | "down" | "removed";
 export type CsrStatus = "pending" | "approved";
 
+export type RebootReason = "install-to-disk" | "mcd-pivot" | "other";
+
 export interface NodeState {
   id: NodeId;
   role?: NodeRole;
@@ -20,6 +22,7 @@ export interface NodeState {
   ip?: string;
   phase: NodePhase;
   rebootCount: number;
+  lastRebootReason?: RebootReason;
   ready: boolean;
 }
 
@@ -49,6 +52,10 @@ export interface ClusterSnapshot {
   csrs: Csr[];
   clusterOperators: Record<string, ClusterOperatorStatus>;
   log: string[];
+}
+
+export function defaultNodeState(id: NodeId): NodeState {
+  return { id, power: "off", phase: "off", rebootCount: 0, ready: false };
 }
 
 export function createInitialSnapshot(initialState: Partial<ClusterSnapshot> = {}): ClusterSnapshot {

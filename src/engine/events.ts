@@ -67,3 +67,7 @@ export type InstallEvent =
   // learner + lesson
   | (BaseEvent & { type: "learner.action"; action: string; payload?: unknown })
   | (BaseEvent & { type: "lesson.gate"; gateId: string; state: "waiting" | "passed" });
+
+export function maxEventTime(events: InstallEvent[]): number {
+  return events.length === 0 ? 0 : Math.max(...events.map((e) => e.t));
+}
