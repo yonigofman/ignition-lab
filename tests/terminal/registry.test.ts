@@ -29,7 +29,7 @@ describe("runLine", () => {
 describe("help", () => {
   it("lists every registered command with a description", () => {
     const result = runLine("help", snapshot);
-    for (const name of ["oc", "dig", "curl", "openshift-install", "ssh", "journalctl", "lab", "help"]) {
+    for (const name of ["oc", "dig", "curl", "openshift-install", "ssh", "journalctl", "lab", "help", "clear"]) {
       expect(result.output).toContain(name);
     }
   });

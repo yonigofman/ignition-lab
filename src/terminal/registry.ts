@@ -1,5 +1,6 @@
 import type { ClusterSnapshot } from "../engine/snapshot";
 import { closestMatch } from "./closestMatch";
+import { clear } from "./commands/clear";
 import { curl } from "./commands/curl";
 import { dig } from "./commands/dig";
 import { help } from "./commands/help";
@@ -14,15 +15,64 @@ import type { CommandResult, RegisteredCommand } from "./types";
 export const registry: Record<string, RegisteredCommand> = {
   oc: {
     description: "Interact with the simulated cluster (get nodes|csr|co|clusterversion, adm certificate approve)",
+    usage: [
+      "oc get nodes                        List Node objects (only registered masters/workers)",
+      "oc get csr                          List CertificateSigningRequests",
+      "oc get co                           List ClusterOperators",
+      "oc get clusterversion               Show the cluster's overall install status",
+      "oc adm certificate approve <name>   Approve a pending CSR",
+    ].join("\n"),
     run: oc,
   },
-  dig: { description: "Query a DNS name", run: dig },
-  curl: { description: "Make an HTTP request against a simulated endpoint", run: curl },
-  "openshift-install": { description: "Installer wait-for checks (wait-for bootstrap-complete|install-complete)", run: openshiftInstall },
-  ssh: { description: "Connect to a cluster machine", run: ssh },
-  journalctl: { description: "View bootstrap service logs", run: journalctl },
-  lab: { description: "[lab] simulator-only helpers to fix DNS/LB, not a real tool (dns add|rm, lb set|rm)", run: lab },
-  help: { description: "List available commands", run: help },
+  clear: {
+    description: "Clear the terminal screen",
+    usage: "clear   Clear the terminal screen",
+    run: clear,
+  },
+  dig: {
+    description: "Query a DNS name",
+    usage: "dig <name>   Query a DNS name against the simulated zone (supports *.apps wildcard records)",
+    run: dig,
+  },
+  curl: {
+    description: "Make an HTTP request against a simulated endpoint",
+    usage:
+      "curl [-k] <url>   Make an HTTP request; fails if the host doesn't resolve or the load balancer has no live backend on that port",
+    run: curl,
+  },
+  "openshift-install": {
+    description: "Installer wait-for checks (wait-for bootstrap-complete|install-complete)",
+    usage: [
+      "openshift-install wait-for bootstrap-complete [--log-level=info]   Report whether bootstrap has finished",
+      "openshift-install wait-for install-complete                        Report whether the install has finished",
+    ].join("\n"),
+    run: openshiftInstall,
+  },
+  ssh: {
+    description: "Connect to a cluster machine",
+    usage: "ssh <user@host>   Connect to a cluster machine (cosmetic banner; no persistent session)",
+    run: ssh,
+  },
+  journalctl: {
+    description: "View bootstrap service logs",
+    usage: "journalctl [-u <unit> ...]   Show bootstrap-related log lines up to the current time",
+    run: journalctl,
+  },
+  lab: {
+    description: "[lab] simulator-only helpers to fix DNS/LB, not a real tool (dns add|rm, lb set|rm)",
+    usage: [
+      "[lab] lab dns add <name> <ip>                      Add a DNS record",
+      "[lab] lab dns rm <name>                             Remove a DNS record",
+      "[lab] lab lb set <frontend> <backend> <state>       Set a load balancer backend's state (up|down|removed)",
+      "[lab] lab lb rm <frontend> <backend>                Remove a load balancer backend",
+    ].join("\n"),
+    run: lab,
+  },
+  help: {
+    description: "List available commands",
+    usage: "help [command]   List all commands, or show detailed usage for one command",
+    run: help,
+  },
 };
 
 export function runLine(line: string, snapshot: ClusterSnapshot): CommandResult {
