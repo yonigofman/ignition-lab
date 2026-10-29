@@ -53,7 +53,7 @@ export function App() {
       </div>
 
       {terminalOpen && (
-        <div className="h-64 border-t border-(--border)">
+        <div className="h-64 shrink-0 overflow-hidden border-t border-(--border)">
           <TerminalPane snapshot={sim.snapshot} onDispatch={sim.dispatch} />
         </div>
       )}

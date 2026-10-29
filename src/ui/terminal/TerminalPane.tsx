@@ -1,3 +1,4 @@
+import { FitAddon } from "@xterm/addon-fit";
 import { Terminal } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { useEffect, useRef } from "react";
@@ -29,8 +30,23 @@ export function TerminalPane({ snapshot, onDispatch }: TerminalPaneProps) {
       fontSize: 13,
       theme: { background: "#0f172a" },
     });
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
     term.open(container);
     terminalRef.current = term;
+
+    let disposed = false;
+    const safeFit = () => {
+      if (disposed) return;
+      requestAnimationFrame(() => {
+        if (disposed) return;
+        fitAddon.fit();
+      });
+    };
+    safeFit();
+
+    const resizeObserver = new ResizeObserver(safeFit);
+    resizeObserver.observe(container);
 
     term.writeln("OpenShift Install Lab terminal. Type `help` for a list of commands.");
     term.write(PROMPT);
@@ -59,10 +75,12 @@ export function TerminalPane({ snapshot, onDispatch }: TerminalPaneProps) {
     });
 
     return () => {
+      disposed = true;
+      resizeObserver.disconnect();
       disposable.dispose();
       term.dispose();
     };
   }, []);
 
-  return <div ref={containerRef} className="h-full w-full bg-[#0f172a] p-2" />;
+  return <div ref={containerRef} className="h-full w-full overflow-hidden bg-[#0f172a] p-2" />;
 }
