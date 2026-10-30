@@ -63,7 +63,15 @@ export function TopologyCanvas({
         id: zoneId,
         type: "zone",
         position: { x: zoneX, y: 0 },
+        // Both `style` (actual CSS size) and `measured` (what React Flow's own
+        // extent/parent-clamping math reads) are set explicitly. Leaving either one
+        // to auto-measurement races the node's own ResizeObserver callback against
+        // the brand-new `nodes` array we hand React Flow on every animation frame
+        // during playback - and until a child's parent is `measured`, React Flow
+        // silently renders that child at the parent's own origin (0,0) instead of
+        // its real offset, which is what "all nodes stacked on each other" is.
         style: { width, height },
+        measured: { width, height },
         zIndex: -1,
         selectable: false,
         draggable: false,
@@ -77,6 +85,8 @@ export function TopologyCanvas({
           parentId: zoneId,
           extent: "parent",
           position: { x: ZONE_PADDING, y: ZONE_PADDING + index * (NODE_HEIGHT + NODE_GAP) },
+          style: { width: NODE_WIDTH, height: NODE_HEIGHT },
+          measured: { width: NODE_WIDTH, height: NODE_HEIGHT },
           selected: node.id === selectedNodeId,
           data: { view: node },
         });

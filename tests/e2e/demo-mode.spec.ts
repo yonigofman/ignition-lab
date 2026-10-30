@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { collectConsoleErrors } from "./helpers";
+import { collectConsoleErrors, selectScenario } from "./helpers";
 
 test("demo mode hides the lesson panel, autoplays with captions, and exits cleanly", async ({ page }) => {
   const errors = collectConsoleErrors(page);
@@ -36,4 +36,40 @@ test("demo mode on a narrow viewport drops the Inspector panel", async ({ page }
 
   await page.getByRole("button", { name: "Demo mode", exact: true }).click();
   await expect(page.getByText("Select a node to see details.")).not.toBeVisible();
+});
+
+test("entering demo mode from a different scenario renders the topology correctly, not blank or stacked", async ({
+  page,
+}) => {
+  const errors = collectConsoleErrors(page);
+
+  await page.goto("/");
+  await page.waitForSelector("text=UPI compact 3-node cluster");
+
+  // Regression: switching scenarios then entering demo mode (which forces the
+  // default scenario, changing the node/zone set) while playback keeps handing
+  // React Flow a new `nodes` array every animation frame raced its own
+  // auto-measurement - nodes stayed `visibility: hidden`, or - when visibility
+  // won the race - rendered at their parent zone's own position instead of their
+  // real offset (all nodes "stacked on each other").
+  await selectScenario(page, "UPI (3 master + 2 worker)");
+  await page.getByRole("button", { name: "Demo mode", exact: true }).click();
+  await page.waitForTimeout(400);
+
+  const boxes = await page.locator(".react-flow__node[data-id]").evaluateAll((nodes) =>
+    nodes.map((n) => {
+      const r = n.getBoundingClientRect();
+      return { id: n.getAttribute("data-id"), x: r.x, y: r.y, visible: getComputedStyle(n).visibility };
+    })
+  );
+
+  expect(boxes.length).toBeGreaterThan(0);
+  for (const box of boxes) {
+    expect(box.visible, `${box.id} should be visible`).toBe("visible");
+  }
+
+  const positions = boxes.map((b) => `${b.x},${b.y}`);
+  expect(new Set(positions).size, "every node should have a distinct position").toBe(positions.length);
+
+  expect(errors).toEqual([]);
 });

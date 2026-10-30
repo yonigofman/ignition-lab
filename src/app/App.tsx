@@ -121,7 +121,9 @@ export function App() {
         )}
 
         <main className="relative flex-1">
+          {/* Keyed by scenario id: switching scenarios while the canvas stays mounted (e.g. entering demo mode) can leave React Flow's internal node-visibility tracking stuck hidden when the node set's shape changes mid-playback. A clean remount avoids it entirely. */}
           <TopologyCanvas
+            key={sim.scenario.id}
             snapshot={sim.snapshot}
             topology={sim.scenario.topology}
             events={sim.events}
