@@ -36,9 +36,17 @@ export interface Scenario {
 
 export type ScenarioStep =
   | { kind: "event"; event: InstallEvent }
-  | { kind: "gate"; gateId: string; prompt: string; check: (s: ClusterSnapshot) => boolean; hint?: string }
+  | {
+      kind: "gate";
+      gateId: string;
+      prompt: string;
+      check: (s: ClusterSnapshot) => boolean;
+      hint?: string;
+      /** The events that satisfy this gate, for callers with no one at the terminal to clear it by hand (demo mode). Optional: a gate with none just stays blocked there. */
+      autoResolve?: (t: number) => InstallEvent[];
+    }
   | { kind: "predict"; id?: string; question: string; options: string[]; answer: number; explain: string }
-  | { kind: "chapter"; title: string; lesson?: string };
+  | { kind: "chapter"; title: string; lesson?: string; caption?: string };
 
 export interface FaultSpec {
   id: string;
@@ -63,28 +71,29 @@ export function scenarioDuration(scenario: Scenario): number {
 export interface ChapterMarker {
   title: string;
   t: number;
+  caption?: string;
 }
 
 export function scenarioChapters(scenario: Scenario): ChapterMarker[] {
   const chapters: ChapterMarker[] = [];
-  let pendingTitles: string[] = [];
+  let pending: { title: string; caption?: string }[] = [];
   let lastEventT = 0;
 
   for (const step of scenario.steps) {
     if (step.kind === "chapter") {
-      pendingTitles.push(step.title);
+      pending.push({ title: step.title, caption: step.caption });
       continue;
     }
     if (step.kind === "event") {
-      for (const title of pendingTitles) {
-        chapters.push({ title, t: step.event.t });
+      for (const p of pending) {
+        chapters.push({ ...p, t: step.event.t });
       }
-      pendingTitles = [];
+      pending = [];
       lastEventT = step.event.t;
     }
   }
-  for (const title of pendingTitles) {
-    chapters.push({ title, t: lastEventT });
+  for (const p of pending) {
+    chapters.push({ ...p, t: lastEventT });
   }
 
   return chapters;

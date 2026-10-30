@@ -106,22 +106,28 @@ export function useSimulation(scenario: Scenario): Simulation {
       if (newEvents.length === 0) return;
       const before = source.getBlockingStep();
       for (const event of newEvents) source.dispatch(event);
-      const after = source.getBlockingStep();
-
-      // Resume whenever the blocker changed - cleared entirely, or moved on to
-      // a later gate/predict further down the scenario (a scenario can have
-      // several gates in sequence; clearing one just reveals the next, so
-      // "no longer blocked at all" is too strict a condition to resume on).
-      if (stalledAtBoundaryRef.current && before !== null && before !== after) {
-        stalledAtBoundaryRef.current = false;
-        clock.play();
-        setIsPlaying(true);
-      }
+      resumeIfStalledPast(before, source.getBlockingStep());
       forceRender((n) => n + 1);
     },
     acknowledge: (stepIndex: number) => {
+      const before = source.getBlockingStep();
       source.acknowledge(stepIndex);
+      resumeIfStalledPast(before, source.getBlockingStep());
       forceRender((n) => n + 1);
     },
   };
+
+  // Resume whenever the blocker changed - cleared entirely, or moved on to a
+  // later gate/predict further down the scenario (a scenario can have several
+  // gates/predicts in sequence; clearing one just reveals the next, so "no
+  // longer blocked at all" is too strict a condition to resume on). Shared by
+  // both dispatch() (gates) and acknowledge() (predicts) - answering either one
+  // should resume an auto-paused demo/learner the same way.
+  function resumeIfStalledPast(before: ScenarioStep | null, after: ScenarioStep | null) {
+    if (stalledAtBoundaryRef.current && before !== null && before !== after) {
+      stalledAtBoundaryRef.current = false;
+      clock.play();
+      setIsPlaying(true);
+    }
+  }
 }

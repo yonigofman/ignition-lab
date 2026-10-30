@@ -17,7 +17,11 @@ const artifacts = buildStandardArtifacts({
 });
 
 const steps: ScenarioStep[] = [
-  { kind: "chapter", title: "Bootstrap boots" },
+  {
+    kind: "chapter",
+    title: "Bootstrap boots",
+    caption: "A temporary bootstrap machine boots up and starts the install.",
+  },
   { kind: "event", event: { t: 0, type: "vm.power", node: "bootstrap", state: "on" } },
   { kind: "event", event: { t: 5, type: "dhcp.lease", node: "bootstrap", ip: "192.168.1.20" } },
   {
@@ -39,7 +43,11 @@ const steps: ScenarioStep[] = [
       "Masters boot from their pointer ignition (served by the helper), then pull the full machine config from bootstrap's Machine Config Server through the API load balancer.",
   },
 
-  { kind: "chapter", title: "Masters join" },
+  {
+    kind: "chapter",
+    title: "Masters join",
+    caption: "The three control-plane machines boot and fetch their configuration.",
+  },
   { kind: "event", event: { t: 20, type: "vm.power", node: "master-0", state: "on" } },
   { kind: "event", event: { t: 21, type: "vm.power", node: "master-1", state: "on" } },
   { kind: "event", event: { t: 22, type: "vm.power", node: "master-2", state: "on" } },
@@ -87,7 +95,11 @@ const steps: ScenarioStep[] = [
       "The temporary control plane running on bootstrap schedules the production control plane's components onto the masters.",
   },
 
-  { kind: "chapter", title: "Control plane comes up" },
+  {
+    kind: "chapter",
+    title: "Control plane comes up",
+    caption: "etcd and the Kubernetes control plane come online across the masters.",
+  },
   { kind: "event", event: { t: 40, type: "controlplane.pod_scheduled", node: "master-0", component: "etcd" } },
   {
     kind: "event",
@@ -115,7 +127,11 @@ const steps: ScenarioStep[] = [
       "The temporary control plane hands over to the now-running production control plane, bootstrap injects the remaining OpenShift components, and openshift-install reports it's safe to remove the bootstrap resources.",
   },
 
-  { kind: "chapter", title: "Bootstrap complete" },
+  {
+    kind: "chapter",
+    title: "Bootstrap complete",
+    caption: "Bootstrap finishes its job and is retired from the cluster.",
+  },
   { kind: "event", event: { t: 60, type: "bootstrap.complete" } },
   {
     kind: "gate",
@@ -124,10 +140,18 @@ const steps: ScenarioStep[] = [
       "Bootstrap has reported complete. Before it can be destroyed, remove it from both load balancer frontends.",
     hint: "Run `lab lb rm 6443 bootstrap` and `lab lb rm 22623 bootstrap` in the terminal.",
     check: (s) => s.lb[6443]?.bootstrap === "removed" && s.lb[22623]?.bootstrap === "removed",
+    autoResolve: (t) => [
+      { t, type: "lb.backend", frontend: 6443, backend: "bootstrap", state: "removed" },
+      { t, type: "lb.backend", frontend: 22623, backend: "bootstrap", state: "removed" },
+    ],
   },
   { kind: "event", event: { t: 70, type: "bootstrap.removed", node: "bootstrap" } },
 
-  { kind: "chapter", title: "Masters register and converge" },
+  {
+    kind: "chapter",
+    title: "Masters register and converge",
+    caption: "Masters register with the cluster and the rest of OpenShift's operators come online.",
+  },
   { kind: "event", event: { t: 75, type: "node.registered", node: "master-0", role: "master" } },
   { kind: "event", event: { t: 76, type: "node.registered", node: "master-1", role: "master" } },
   { kind: "event", event: { t: 77, type: "node.registered", node: "master-2", role: "master" } },
@@ -162,7 +186,7 @@ const steps: ScenarioStep[] = [
     event: { t: 135, type: "co.status", name: "image-registry", available: false, progressing: false, degraded: false },
   },
 
-  { kind: "chapter", title: "Install complete" },
+  { kind: "chapter", title: "Install complete", caption: "The cluster is up. Install complete." },
   { kind: "event", event: { t: 150, type: "install.complete" } },
 ];
 

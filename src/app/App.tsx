@@ -2,8 +2,11 @@ import { useState } from "react";
 import type { NodeId } from "../engine/events";
 import { ArtifactsPanel } from "../ui/artifacts/ArtifactsPanel";
 import { BlockingBanner } from "../ui/blocking/BlockingBanner";
+import { ToolbarButton } from "../ui/chrome/ToolbarButton";
 import { deriveWhoDoesThisView } from "../ui/contrast/deriveWhoDoesThisView";
 import { WhoDoesThisBanner } from "../ui/contrast/WhoDoesThisBanner";
+import { CaptionBanner } from "../ui/demo/CaptionBanner";
+import { deriveCaptionView } from "../ui/demo/deriveCaptionView";
 import { Inspector } from "../ui/inspector/Inspector";
 import { LessonContext } from "../ui/lesson/LessonContext";
 import { LessonPanel } from "../ui/lesson/LessonPanel";
@@ -12,12 +15,18 @@ import { TerminalPane } from "../ui/terminal/TerminalPane";
 import { Timeline } from "../ui/timeline/Timeline";
 import { TopologyCanvas } from "../ui/topology/TopologyCanvas";
 import { SCENARIO_OPTIONS } from "./scenarioOptions";
+import { useDemoMode } from "./useDemoMode";
+import { useMediaQuery } from "./useMediaQuery";
 import { useSimulation } from "./useSimulation";
 import { useTheme } from "./useTheme";
 
+const DEMO_SCENARIO_INDEX = 0;
+
 export function App() {
   const [scenarioIndex, setScenarioIndex] = useState(0);
-  const sim = useSimulation((SCENARIO_OPTIONS[scenarioIndex] ?? SCENARIO_OPTIONS[0]).scenario);
+  const [demoMode, setDemoMode] = useState(false);
+  const activeScenarioIndex = demoMode ? DEMO_SCENARIO_INDEX : scenarioIndex;
+  const sim = useSimulation((SCENARIO_OPTIONS[activeScenarioIndex] ?? SCENARIO_OPTIONS[0]).scenario);
   const [selectedNodeId, setSelectedNodeId] = useState<NodeId | null>(null);
   const [highlightedNodeId, setHighlightedNodeId] = useState<NodeId | null>(null);
   const [theme, toggleTheme] = useTheme();
@@ -25,91 +34,85 @@ export function App() {
   const [filesOpen, setFilesOpen] = useState(false);
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [whoDoesThisOn, setWhoDoesThisOn] = useState(false);
+  const isNarrow = useMediaQuery("(max-width: 767px)");
 
   const lessonState = deriveLessonState(sim.scenario, sim.snapshot, sim.blockingStep);
   const whoDoesThisView = deriveWhoDoesThisView(sim.events, sim.currentT, whoDoesThisOn);
+  const captionView = deriveCaptionView(sim.scenario, sim.currentT);
+
+  const { enterDemoMode, exitDemoMode } = useDemoMode(sim, demoMode, setDemoMode, scenarioIndex, setScenarioIndex, () => {
+    setTerminalOpen(false);
+    setFilesOpen(false);
+  });
 
   return (
     <div className="flex h-screen w-screen flex-col bg-(--bg) text-(--text)">
-      <header className="flex items-center justify-between border-b border-(--border) px-4 py-2">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-(--border) px-4 py-2">
         <h1 className="text-sm font-semibold uppercase tracking-wide text-(--text-muted)">
           {sim.scenario.title}
         </h1>
-        <div className="flex items-center gap-2">
-          <select
-            value={scenarioIndex}
-            onChange={(e) => {
-              setScenarioIndex(Number(e.target.value));
-              setSelectedNodeId(null);
-              setHighlightedNodeId(null);
-            }}
-            className="rounded border border-(--border) bg-(--surface) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
-          >
-            {SCENARIO_OPTIONS.map((option, index) => (
-              <option key={option.label} value={index}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={() => setTerminalOpen((open) => !open)}
-            className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
-          >
-            {terminalOpen ? "Hide terminal" : "Terminal"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilesOpen((open) => !open)}
-            className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
-          >
-            {filesOpen ? "Hide files" : "Files"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setWhoDoesThisOn((on) => !on)}
-            className={`rounded border px-2 py-1 text-xs ${
-              whoDoesThisOn
-                ? "border-fuchsia-500 bg-fuchsia-500/10 text-fuchsia-400"
-                : "border-(--border) text-(--text-muted) hover:text-(--text)"
-            }`}
-          >
+        <div className="flex flex-wrap items-center gap-2">
+          {!demoMode && (
+            <>
+              <select
+                value={scenarioIndex}
+                onChange={(e) => {
+                  setScenarioIndex(Number(e.target.value));
+                  setSelectedNodeId(null);
+                  setHighlightedNodeId(null);
+                }}
+                className="rounded border border-(--border) bg-(--surface) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
+              >
+                {SCENARIO_OPTIONS.map((option, index) => (
+                  <option key={option.label} value={index}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ToolbarButton onClick={() => setTerminalOpen((open) => !open)} active={terminalOpen}>
+                {terminalOpen ? "Hide terminal" : "Terminal"}
+              </ToolbarButton>
+              <ToolbarButton onClick={() => setFilesOpen((open) => !open)} active={filesOpen}>
+                {filesOpen ? "Hide files" : "Files"}
+              </ToolbarButton>
+            </>
+          )}
+          <ToolbarButton onClick={() => setWhoDoesThisOn((on) => !on)} active={whoDoesThisOn}>
             Who does this?
-          </button>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="rounded border border-(--border) px-2 py-1 text-xs text-(--text-muted) hover:text-(--text)"
-          >
-            {theme === "dark" ? "Light mode" : "Dark mode"}
-          </button>
+          </ToolbarButton>
+          <ToolbarButton onClick={demoMode ? exitDemoMode : enterDemoMode} active={demoMode}>
+            {demoMode ? "Exit demo" : "Demo mode"}
+          </ToolbarButton>
+          <ToolbarButton onClick={toggleTheme}>{theme === "dark" ? "Light mode" : "Dark mode"}</ToolbarButton>
         </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <LessonContext.Provider
-          value={{
-            scenario: sim.scenario,
-            events: sim.events,
-            snapshot: sim.snapshot,
-            currentT: sim.currentT,
-            isPlaying: sim.isPlaying,
-            lessonState,
-            play: sim.play,
-            pause: sim.pause,
-            dispatch: sim.dispatch,
-            acknowledge: sim.acknowledge,
-            setHighlightedNodeId,
-            setOpenArtifactId: (id) => {
-              setSelectedArtifactId(id);
-              setFilesOpen(id !== null);
-            },
-          }}
-        >
-          <LessonPanel />
-        </LessonContext.Provider>
+        {!demoMode && (
+          <LessonContext.Provider
+            value={{
+              scenario: sim.scenario,
+              events: sim.events,
+              snapshot: sim.snapshot,
+              currentT: sim.currentT,
+              isPlaying: sim.isPlaying,
+              lessonState,
+              play: sim.play,
+              pause: sim.pause,
+              dispatch: sim.dispatch,
+              acknowledge: sim.acknowledge,
+              setHighlightedNodeId,
+              setOpenArtifactId: (id) => {
+                setSelectedArtifactId(id);
+                setFilesOpen(id !== null);
+              },
+            }}
+          >
+            <LessonPanel />
+          </LessonContext.Provider>
+        )}
 
-        <main className="flex-1">
+        <main className="relative flex-1">
           <TopologyCanvas
             snapshot={sim.snapshot}
             topology={sim.scenario.topology}
@@ -118,18 +121,21 @@ export function App() {
             onSelectNode={setSelectedNodeId}
             highlightedNodeId={highlightedNodeId}
           />
+          {demoMode && <CaptionBanner view={captionView} />}
         </main>
 
-        <Inspector snapshot={sim.snapshot} events={sim.events} selectedNodeId={selectedNodeId} />
+        {!(demoMode && isNarrow) && (
+          <Inspector snapshot={sim.snapshot} events={sim.events} selectedNodeId={selectedNodeId} />
+        )}
       </div>
 
-      {terminalOpen && (
+      {!demoMode && terminalOpen && (
         <div className="h-64 shrink-0 overflow-hidden border-t border-(--border)">
           <TerminalPane snapshot={sim.snapshot} theme={theme} onDispatch={sim.dispatch} />
         </div>
       )}
 
-      {filesOpen && (
+      {!demoMode && filesOpen && (
         <ArtifactsPanel
           artifacts={sim.scenario.artifacts}
           selectedId={selectedArtifactId}
@@ -139,7 +145,7 @@ export function App() {
       )}
 
       <WhoDoesThisBanner view={whoDoesThisView} />
-      <BlockingBanner lessonState={lessonState} />
+      {!demoMode && <BlockingBanner lessonState={lessonState} />}
 
       <Timeline
         scenario={sim.scenario}

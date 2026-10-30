@@ -9,6 +9,8 @@
   --border: #334155;
   --text: #e5e7eb;
   --text-muted: #94a3b8;
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 :root[data-theme="light"] {
@@ -24,6 +26,7 @@
 body {
   background-color: var(--bg);
   color: var(--text);
+  font-family: var(--font-sans);
 }
 
 .lesson-content h2 {
