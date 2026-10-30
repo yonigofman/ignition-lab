@@ -60,13 +60,13 @@ export function ClusterNode({ data }: NodeProps<ClusterFlowNode>) {
     >
       <Handle type="target" position={Position.Left} />
       <div className="font-semibold">{view.label}</div>
-      <div className="text-gray-400">{view.role}</div>
+      <div className="text-(--text-muted)">{view.role}</div>
       <div className="mt-1 flex items-center gap-1">
         <span className="rounded px-1" style={{ backgroundColor: PHASE_RING_COLOR[view.phase] }}>
           {view.phase}
         </span>
         {view.rebootCount > 0 && (
-          <span className="text-gray-400">
+          <span className="text-(--text-muted)">
             ↻{view.rebootCount}
             {view.lastRebootReason && (
               <span className="ml-1" style={{ color: REBOOT_REASON_COLOR[view.lastRebootReason] }}>
@@ -77,7 +77,7 @@ export function ClusterNode({ data }: NodeProps<ClusterFlowNode>) {
         )}
       </div>
       {view.etcdMember && <div className="mt-1 text-cyan-400">etcd member</div>}
-      {view.removed && <div className="mt-1 text-gray-500">removed from cluster</div>}
+      {view.removed && <div className="mt-1 text-(--text-muted)">removed from cluster</div>}
       <Handle type="source" position={Position.Right} />
     </motion.div>
   );

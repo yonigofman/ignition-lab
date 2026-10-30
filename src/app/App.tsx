@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { NodeId } from "../engine/events";
 import { ArtifactsPanel } from "../ui/artifacts/ArtifactsPanel";
 import { BlockingBanner } from "../ui/blocking/BlockingBanner";
+import { ResizeHandle } from "../ui/chrome/ResizeHandle";
 import { ToolbarButton } from "../ui/chrome/ToolbarButton";
 import { deriveWhoDoesThisView } from "../ui/contrast/deriveWhoDoesThisView";
 import { WhoDoesThisBanner } from "../ui/contrast/WhoDoesThisBanner";
@@ -17,6 +18,7 @@ import { TopologyCanvas } from "../ui/topology/TopologyCanvas";
 import { SCENARIO_OPTIONS } from "./scenarioOptions";
 import { useDemoMode } from "./useDemoMode";
 import { useMediaQuery } from "./useMediaQuery";
+import { useResizable } from "./useResizable";
 import { useSimulation } from "./useSimulation";
 import { useTheme } from "./useTheme";
 
@@ -35,6 +37,9 @@ export function App() {
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
   const [whoDoesThisOn, setWhoDoesThisOn] = useState(false);
   const isNarrow = useMediaQuery("(max-width: 767px)");
+  const lessonPanel = useResizable(320, 240, 560, "grow-right");
+  const inspector = useResizable(288, 220, 480, "grow-left");
+  const drawer = useResizable(256, 160, 560, "grow-up");
 
   const lessonState = deriveLessonState(sim.scenario, sim.snapshot, sim.blockingStep);
   const whoDoesThisView = deriveWhoDoesThisView(sim.events, sim.currentT, whoDoesThisOn);
@@ -89,27 +94,30 @@ export function App() {
 
       <div className="flex flex-1 overflow-hidden">
         {!demoMode && (
-          <LessonContext.Provider
-            value={{
-              scenario: sim.scenario,
-              events: sim.events,
-              snapshot: sim.snapshot,
-              currentT: sim.currentT,
-              isPlaying: sim.isPlaying,
-              lessonState,
-              play: sim.play,
-              pause: sim.pause,
-              dispatch: sim.dispatch,
-              acknowledge: sim.acknowledge,
-              setHighlightedNodeId,
-              setOpenArtifactId: (id) => {
-                setSelectedArtifactId(id);
-                setFilesOpen(id !== null);
-              },
-            }}
-          >
-            <LessonPanel />
-          </LessonContext.Provider>
+          <>
+            <LessonContext.Provider
+              value={{
+                scenario: sim.scenario,
+                events: sim.events,
+                snapshot: sim.snapshot,
+                currentT: sim.currentT,
+                isPlaying: sim.isPlaying,
+                lessonState,
+                play: sim.play,
+                pause: sim.pause,
+                dispatch: sim.dispatch,
+                acknowledge: sim.acknowledge,
+                setHighlightedNodeId,
+                setOpenArtifactId: (id) => {
+                  setSelectedArtifactId(id);
+                  setFilesOpen(id !== null);
+                },
+              }}
+            >
+              <LessonPanel width={lessonPanel.size} />
+            </LessonContext.Provider>
+            <ResizeHandle axis="x" onDragStart={lessonPanel.onDragStart} />
+          </>
         )}
 
         <main className="relative flex-1">
@@ -125,23 +133,38 @@ export function App() {
         </main>
 
         {!(demoMode && isNarrow) && (
-          <Inspector snapshot={sim.snapshot} events={sim.events} selectedNodeId={selectedNodeId} />
+          <>
+            <ResizeHandle axis="x" onDragStart={inspector.onDragStart} />
+            <Inspector
+              snapshot={sim.snapshot}
+              events={sim.events}
+              selectedNodeId={selectedNodeId}
+              width={inspector.size}
+            />
+          </>
         )}
       </div>
 
       {!demoMode && terminalOpen && (
-        <div className="h-64 shrink-0 overflow-hidden border-t border-(--border)">
-          <TerminalPane snapshot={sim.snapshot} theme={theme} onDispatch={sim.dispatch} />
-        </div>
+        <>
+          <ResizeHandle axis="y" onDragStart={drawer.onDragStart} />
+          <div className="shrink-0 overflow-hidden border-t border-(--border)" style={{ height: drawer.size }}>
+            <TerminalPane snapshot={sim.snapshot} theme={theme} onDispatch={sim.dispatch} />
+          </div>
+        </>
       )}
 
       {!demoMode && filesOpen && (
-        <ArtifactsPanel
-          artifacts={sim.scenario.artifacts}
-          selectedId={selectedArtifactId}
-          onSelect={setSelectedArtifactId}
-          onClose={() => setFilesOpen(false)}
-        />
+        <>
+          <ResizeHandle axis="y" onDragStart={drawer.onDragStart} />
+          <ArtifactsPanel
+            artifacts={sim.scenario.artifacts}
+            selectedId={selectedArtifactId}
+            onSelect={setSelectedArtifactId}
+            onClose={() => setFilesOpen(false)}
+            height={drawer.size}
+          />
+        </>
       )}
 
       <WhoDoesThisBanner view={whoDoesThisView} />

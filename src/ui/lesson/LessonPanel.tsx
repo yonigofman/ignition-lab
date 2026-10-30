@@ -25,7 +25,11 @@ const LESSONS: readonly [LessonModule, ...LessonModule[]] = [
   { Content: Lesson4, meta: lesson4Meta },
 ];
 
-export function LessonPanel() {
+export interface LessonPanelProps {
+  width?: number;
+}
+
+export function LessonPanel({ width }: LessonPanelProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const active = LESSONS[activeIndex] ?? LESSONS[0];
 
@@ -35,7 +39,10 @@ export function LessonPanel() {
   }, [active]);
 
   return (
-    <div className="flex h-full w-80 shrink-0 flex-col border-r border-(--border) bg-(--surface-muted)">
+    <div
+      className="flex h-full w-80 shrink-0 flex-col border-r border-(--border) bg-(--surface-muted)"
+      style={width ? { width } : undefined}
+    >
       <div className="flex flex-wrap items-center gap-1 border-b border-(--border) p-2">
         {LESSONS.map((lesson, index) => (
           <button

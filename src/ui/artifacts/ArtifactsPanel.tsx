@@ -6,13 +6,17 @@ export interface ArtifactsPanelProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onClose: () => void;
+  height?: number;
 }
 
-export function ArtifactsPanel({ artifacts, selectedId, onSelect, onClose }: ArtifactsPanelProps) {
+export function ArtifactsPanel({ artifacts, selectedId, onSelect, onClose, height }: ArtifactsPanelProps) {
   const selectedArtifact = artifacts.find((a) => a.id === selectedId) ?? artifacts[0];
 
   return (
-    <div className="flex h-64 shrink-0 border-t border-(--border) bg-(--surface)">
+    <div
+      className="flex h-64 shrink-0 border-t border-(--border) bg-(--surface)"
+      style={height ? { height } : undefined}
+    >
       <div className="w-56 shrink-0 overflow-y-auto border-r border-(--border)">
         <div className="flex items-center justify-between border-b border-(--border) px-3 py-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-(--text-muted)">Files</span>
