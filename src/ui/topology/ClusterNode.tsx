@@ -77,6 +77,7 @@ export function ClusterNode({ data }: NodeProps<ClusterFlowNode>) {
         )}
       </div>
       {view.etcdMember && <div className="mt-1 text-cyan-400">etcd member</div>}
+      {!view.schedulable && <div className="mt-1 text-amber-400">cordoned</div>}
       {view.removed && <div className="mt-1 text-(--text-muted)">removed from cluster</div>}
       <Handle type="source" position={Position.Right} />
     </motion.div>

@@ -14,13 +14,15 @@ import type { CommandResult, RegisteredCommand } from "./types";
 
 export const registry: Record<string, RegisteredCommand> = {
   oc: {
-    description: "Interact with the simulated cluster (get nodes|csr|co|clusterversion, adm certificate approve)",
+    description: "Interact with the simulated cluster (get nodes|csr|co|clusterversion|mcp, adm certificate approve|upgrade)",
     usage: [
       "oc get nodes                        List Node objects (only registered masters/workers)",
       "oc get csr                          List CertificateSigningRequests",
       "oc get co                           List ClusterOperators",
-      "oc get clusterversion               Show the cluster's overall install status",
+      "oc get clusterversion               Show the cluster's overall install/upgrade status",
+      "oc get mcp                          List MachineConfigPool rollout status (master/worker)",
       "oc adm certificate approve <name>   Approve a pending CSR",
+      "oc adm upgrade [--to=<version>]     Show update status, or start an upgrade to <version>",
     ].join("\n"),
     run: oc,
   },

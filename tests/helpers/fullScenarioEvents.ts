@@ -47,6 +47,12 @@ export function fullEventsFor(scenario: Scenario): InstallEvent[] {
       continue;
     }
 
+    if (blocking.kind === "gate" && blocking.gateId === "start-upgrade") {
+      source.dispatch({ t: 0, type: "clusterversion.update_started", desired: "4.15.3" });
+      blocking = source.getBlockingStep();
+      continue;
+    }
+
     throw new Error(`fullEventsFor: don't know how to satisfy blocking step: ${JSON.stringify(blocking)}`);
   }
 

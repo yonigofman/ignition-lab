@@ -18,6 +18,7 @@ export interface TopologyNodeView {
   phase: NodePhase;
   power: "on" | "off";
   ready: boolean;
+  schedulable: boolean;
   rebootCount: number;
   lastRebootReason?: RebootReason;
   zone: TopologyZone;
@@ -145,6 +146,7 @@ export function deriveTopologyView(
       phase: state.phase,
       power: state.power,
       ready: state.ready,
+      schedulable: state.schedulable,
       rebootCount: state.rebootCount,
       lastRebootReason: state.lastRebootReason,
       zone: topoNode.zone ?? zoneForRole(topoNode.role),

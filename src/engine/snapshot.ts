@@ -26,6 +26,14 @@ export interface NodeState {
   lastRebootReason?: RebootReason;
   ready: boolean;
   registeredAt?: number;
+  /** Mirrors Kubernetes' own `spec.unschedulable` - false while cordoned (e.g. mid-upgrade rollout). */
+  schedulable: boolean;
+}
+
+export interface ClusterVersionState {
+  current: string;
+  desired: string;
+  progressing: boolean;
 }
 
 export interface Csr {
@@ -55,11 +63,12 @@ export interface ClusterSnapshot {
   etcdMembers: NodeId[];
   csrs: Csr[];
   clusterOperators: Record<string, ClusterOperatorStatus>;
+  clusterVersion: ClusterVersionState;
   log: string[];
 }
 
 export function defaultNodeState(id: NodeId): NodeState {
-  return { id, power: "off", phase: "off", rebootCount: 0, ready: false };
+  return { id, power: "off", phase: "off", rebootCount: 0, ready: false, schedulable: true };
 }
 
 export function createInitialSnapshot(initialState: Partial<ClusterSnapshot> = {}): ClusterSnapshot {
@@ -72,6 +81,7 @@ export function createInitialSnapshot(initialState: Partial<ClusterSnapshot> = {
     etcdMembers: [],
     csrs: [],
     clusterOperators: {},
+    clusterVersion: { current: "", desired: "", progressing: false },
     log: [],
     ...initialState,
   };

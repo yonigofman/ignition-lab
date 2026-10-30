@@ -4,6 +4,7 @@ import Lesson1, { meta as lesson1Meta } from "../../lessons/01-upi-prerequisites
 import Lesson2, { meta as lesson2Meta } from "../../lessons/02-install-config-to-ignition.mdx";
 import Lesson3, { meta as lesson3Meta } from "../../lessons/03-bootstrap-dance.mdx";
 import Lesson4, { meta as lesson4Meta } from "../../lessons/04-ipi-baremetal.mdx";
+import Lesson5, { meta as lesson5Meta } from "../../lessons/05-upgrade.mdx";
 import { setLessonCommands } from "../../terminal/registry";
 
 interface LessonMeta {
@@ -23,6 +24,7 @@ const LESSONS: readonly [LessonModule, ...LessonModule[]] = [
   { Content: Lesson2, meta: lesson2Meta },
   { Content: Lesson3, meta: lesson3Meta },
   { Content: Lesson4, meta: lesson4Meta },
+  { Content: Lesson5, meta: lesson5Meta },
 ];
 
 export interface LessonPanelProps {

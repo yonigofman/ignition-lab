@@ -1,0 +1,59 @@
+import { Gate } from "../ui/lesson/components/Gate";
+import { HighlightNode } from "../ui/lesson/components/HighlightNode";
+import { PlayUntil } from "../ui/lesson/components/PlayUntil";
+
+export const meta = {
+  title: "Upgrading a running cluster",
+  module: 5,
+  commands: ["oc"],
+};
+
+Every other module watches a cluster come *into* existence. This one picks up after that's long
+over: a healthy, fully-converged cluster, already serving workloads, that someone now wants to move
+to a newer OpenShift version. Switch the scenario picker to "Upgrade" before continuing.
+
+## Someone has to start it
+
+<Gate id="start-upgrade" />
+
+Unlike bootstrap - which runs itself the moment the machines are powered on - an upgrade never starts
+on its own. Run `oc adm upgrade --to=4.15.3` in the terminal. That's true whether the cluster was
+installed UPI or IPI: automation can run the *install*, but a human (or a pipeline acting on a human's
+behalf) always decides when a running cluster takes a new version.
+
+<PlayUntil chapter="Control plane operators update" />
+
+## Control plane first
+
+Once the upgrade starts, the ClusterOperators that make up the control plane update first - `etcd`,
+the API servers, the scheduler, networking - each briefly `Progressing` before settling back to
+`Available`. `machine-config` is the one to watch: it stays `Progressing` for the entire node rollout
+below, because it's the operator actually driving it, not just reporting its own version bump.
+
+<PlayUntil chapter="Masters roll, one at a time" />
+
+## Masters roll, one at a time
+
+<HighlightNode id="master-0" />
+
+This is the part worth watching closely. Each master is cordoned, drained, rebooted onto the new
+RHCOS image (the same `mcd-pivot` reboot you saw during install), uncordoned, and only then marked
+Ready - before the *next* master starts. Never two at once. Losing more than one master mid-rollout
+would risk etcd quorum, so the rollout deliberately refuses to parallelize this part no matter how
+many masters there are.
+
+<PlayUntil chapter="Workers roll, one at a time" />
+
+## Workers wait their turn
+
+Workers don't start rolling until every master has finished - control plane first, always. From
+there it's the identical cordon → drain → reboot → uncordon → ready sequence, still one node at a
+time by default.
+
+<PlayUntil chapter="Upgrade complete" />
+
+## What "done" means
+
+The upgrade isn't complete when the last node reboots - it's complete when `clusterversion` reports
+the new version with nothing left `Progressing`. Run `oc get clusterversion` and `oc get mcp` at any
+point during this scenario to see exactly what a real operator watches while an upgrade is running.

@@ -238,4 +238,25 @@ describe("reduce", () => {
     reduce(s0, at({ t: 1, type: "vm.power", node: "bootstrap", state: "on" }));
     expect(s0).toEqual(frozen);
   });
+
+  it("node.schedulable toggles a node's schedulable flag, defaulting true", () => {
+    const s0 = createInitialSnapshot();
+    expect(s0.nodes["master-0"]).toBeUndefined();
+    const s1 = reduce(s0, at({ t: 1, type: "node.schedulable", node: "master-0", schedulable: false }));
+    expect(s1.nodes["master-0"]).toMatchObject({ schedulable: false });
+    const s2 = reduce(s1, at({ t: 2, type: "node.schedulable", node: "master-0", schedulable: true }));
+    expect(s2.nodes["master-0"]).toMatchObject({ schedulable: true });
+  });
+
+  it("clusterversion.update_started sets desired and progressing, without touching current", () => {
+    const s0 = createInitialSnapshot({ clusterVersion: { current: "4.14.10", desired: "4.14.10", progressing: false } });
+    const s1 = reduce(s0, at({ t: 1, type: "clusterversion.update_started", desired: "4.15.3" }));
+    expect(s1.clusterVersion).toEqual({ current: "4.14.10", desired: "4.15.3", progressing: true });
+  });
+
+  it("clusterversion.update_complete moves current to desired and clears progressing", () => {
+    const s0 = createInitialSnapshot({ clusterVersion: { current: "4.14.10", desired: "4.15.3", progressing: true } });
+    const s1 = reduce(s0, at({ t: 1, type: "clusterversion.update_complete" }));
+    expect(s1.clusterVersion).toEqual({ current: "4.15.3", desired: "4.15.3", progressing: false });
+  });
 });

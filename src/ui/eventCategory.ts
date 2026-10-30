@@ -24,6 +24,7 @@ export function eventCategory(event: InstallEvent): EventCategory {
     case "bootstrap.removed":
     case "node.registered":
     case "node.ready":
+    case "node.schedulable":
     case "install.complete":
     case "install.failed":
       return "control-plane";
@@ -31,6 +32,8 @@ export function eventCategory(event: InstallEvent): EventCategory {
     case "csr.approved":
       return "csr";
     case "co.status":
+    case "clusterversion.update_started":
+    case "clusterversion.update_complete":
       return "operator";
     case "learner.action":
       return "learner";

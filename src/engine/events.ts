@@ -69,6 +69,10 @@ export type InstallEvent =
     })
   | (BaseEvent & { type: "install.complete" })
   | (BaseEvent & { type: "install.failed"; reason: string })
+  // upgrades
+  | (BaseEvent & { type: "node.schedulable"; node: NodeId; schedulable: boolean })
+  | (BaseEvent & { type: "clusterversion.update_started"; desired: string })
+  | (BaseEvent & { type: "clusterversion.update_complete" })
   // learner + lesson
   | (BaseEvent & { type: "learner.action"; action: string; payload?: unknown })
   | (BaseEvent & { type: "lesson.gate"; gateId: string; state: "waiting" | "passed" });

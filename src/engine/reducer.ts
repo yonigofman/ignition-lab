@@ -66,6 +66,12 @@ function renderLogLine(event: InstallEvent): string {
       return "install complete";
     case "install.failed":
       return `install failed: ${event.reason}`;
+    case "node.schedulable":
+      return `${event.node} ${event.schedulable ? "uncordoned" : "cordoned"}`;
+    case "clusterversion.update_started":
+      return `clusterversion update started: -> ${event.desired}`;
+    case "clusterversion.update_complete":
+      return "clusterversion update complete";
     case "learner.action":
       return `learner action: ${event.action}`;
     case "lesson.gate":
@@ -208,6 +214,18 @@ export function reduce(snapshot: ClusterSnapshot, event: InstallEvent): ClusterS
       break;
     case "install.failed":
       next = { ...next, phase: "failed", failureReason: event.reason };
+      break;
+    case "node.schedulable":
+      next = updateNode(next, event.node, (n) => ({ ...n, schedulable: event.schedulable }));
+      break;
+    case "clusterversion.update_started":
+      next = { ...next, clusterVersion: { ...next.clusterVersion, desired: event.desired, progressing: true } };
+      break;
+    case "clusterversion.update_complete":
+      next = {
+        ...next,
+        clusterVersion: { ...next.clusterVersion, current: next.clusterVersion.desired, progressing: false },
+      };
       break;
     case "learner.action":
       break;

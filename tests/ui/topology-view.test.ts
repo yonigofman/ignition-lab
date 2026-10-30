@@ -143,6 +143,7 @@ describe("nonEmptyZones", () => {
       phase: "off",
       power: "off",
       ready: false,
+      schedulable: true,
       rebootCount: 0,
       zone,
       etcdMember: false,
