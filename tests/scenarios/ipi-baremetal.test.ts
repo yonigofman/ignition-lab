@@ -87,6 +87,13 @@ describe("ipi-baremetal > topology", () => {
     expect(ids).not.toContain("helper");
     expect(ids).not.toContain("lb");
   });
+
+  it("never emits lb.backend events or seeds lb state - VIPs are on-cluster, not an external LB", () => {
+    const source = new SimulatorSource(ipiBaremetal);
+    const events = source.getEvents();
+    expect(events.some((e) => e.type === "lb.backend")).toBe(false);
+    expect(ipiBaremetal.initialState.lb).toBeUndefined();
+  });
 });
 
 describe("ipi-baremetal > convergence", () => {

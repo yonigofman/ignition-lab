@@ -82,26 +82,6 @@ const steps: ScenarioStep[] = [
   {
     kind: "event",
     event: {
-      t: 62,
-      type: "lb.backend",
-      frontend: 6443,
-      backend: "bootstrap",
-      state: "removed",
-    },
-  },
-  {
-    kind: "event",
-    event: {
-      t: 63,
-      type: "lb.backend",
-      frontend: 22623,
-      backend: "bootstrap",
-      state: "removed",
-    },
-  },
-  {
-    kind: "event",
-    event: {
       t: 65,
       type: "bootstrap.removed",
       node: "bootstrap",
@@ -273,12 +253,8 @@ export const ipiBaremetal: Scenario = {
       [`api-int.${CLUSTER}.${BASE_DOMAIN}`]: API_VIP,
       [`*.apps.${CLUSTER}.${BASE_DOMAIN}`]: INGRESS_VIP,
     },
-    lb: {
-      6443: { bootstrap: "up", "master-0": "down", "master-1": "down", "master-2": "down" },
-      22623: { bootstrap: "up", "master-0": "down", "master-1": "down", "master-2": "down" },
-      80: { "worker-0": "up", "worker-1": "up" },
-      443: { "worker-0": "up", "worker-1": "up" },
-    },
+    // No lb state: there's no external load balancer in bare-metal IPI. VIPs are
+    // provided on-cluster by keepalived/haproxy, not modeled as an lb.backend-tracked node.
   },
   steps,
   artifacts: buildIpiBaremetalArtifacts({
