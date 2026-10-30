@@ -40,7 +40,7 @@ export function LessonPanel({ width }: LessonPanelProps) {
 
   return (
     <div
-      className="flex h-full w-80 shrink-0 flex-col border-r border-(--border) bg-(--surface-muted)"
+      className="flex h-full w-80 shrink-0 flex-col border-r border-(--border) bg-(--surface-muted) shadow-[4px_0_16px_-8px_rgba(0,0,0,0.3)]"
       style={width ? { width } : undefined}
     >
       <div className="flex flex-wrap items-center gap-1 border-b border-(--border) p-2">

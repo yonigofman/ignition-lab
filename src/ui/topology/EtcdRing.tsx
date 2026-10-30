@@ -19,7 +19,7 @@ export function EtcdRing({ joined, total }: EtcdRingProps) {
   });
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-(--border) bg-(--surface-muted) px-3 py-2 text-xs text-(--text-muted)">
+    <div className="flex items-center gap-2 rounded-lg border border-(--border) bg-(--surface-muted) px-3 py-2 text-xs text-(--text-muted) shadow-lg shadow-black/20">
       <svg width={SIZE} height={SIZE} role="img" aria-label={`etcd ${joined} of ${total} members joined`}>
         <circle cx={CENTER} cy={CENTER} r={RADIUS} fill="none" stroke="#334155" strokeWidth={1.5} />
         {points.map((p, i) => {

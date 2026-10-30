@@ -14,7 +14,7 @@ export function ArtifactsPanel({ artifacts, selectedId, onSelect, onClose, heigh
 
   return (
     <div
-      className="flex h-64 shrink-0 border-t border-(--border) bg-(--surface)"
+      className="flex h-64 shrink-0 border-t border-(--border) bg-(--surface) shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.3)]"
       style={height ? { height } : undefined}
     >
       <div className="w-56 shrink-0 overflow-y-auto border-r border-(--border)">

@@ -31,7 +31,7 @@ export function Inspector({ snapshot, events, selectedNodeId, width }: Inspector
 
   return (
     <div
-      className="flex h-full w-72 flex-col gap-3 border-l border-(--border) bg-(--surface-muted) p-3 text-sm text-(--text)"
+      className="flex h-full w-72 flex-col gap-3 border-l border-(--border) bg-(--surface-muted) p-3 text-sm text-(--text) shadow-[-4px_0_16px_-8px_rgba(0,0,0,0.3)]"
       style={width ? { width } : undefined}
     >
       <div className="flex items-center justify-between">

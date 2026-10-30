@@ -4,6 +4,7 @@ import { ArtifactsPanel } from "../ui/artifacts/ArtifactsPanel";
 import { BlockingBanner } from "../ui/blocking/BlockingBanner";
 import { ResizeHandle } from "../ui/chrome/ResizeHandle";
 import { ToolbarButton } from "../ui/chrome/ToolbarButton";
+import { Wordmark } from "../ui/chrome/Wordmark";
 import { deriveWhoDoesThisView } from "../ui/contrast/deriveWhoDoesThisView";
 import { WhoDoesThisBanner } from "../ui/contrast/WhoDoesThisBanner";
 import { CaptionBanner } from "../ui/demo/CaptionBanner";
@@ -52,10 +53,12 @@ export function App() {
 
   return (
     <div className="flex h-screen w-screen flex-col bg-(--bg) text-(--text)">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-(--border) px-4 py-2">
-        <h1 className="text-sm font-semibold uppercase tracking-wide text-(--text-muted)">
-          {sim.scenario.title}
-        </h1>
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-(--border) bg-(--surface)/60 px-4 py-2.5 shadow-sm backdrop-blur">
+        <div className="flex items-center gap-3">
+          <Wordmark />
+          <span className="h-4 w-px bg-(--border)" />
+          <h1 className="text-xs font-medium text-(--text-muted)">{sim.scenario.title}</h1>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {!demoMode && (
             <>
@@ -150,7 +153,10 @@ export function App() {
       {!demoMode && terminalOpen && (
         <>
           <ResizeHandle axis="y" onDragStart={drawer.onDragStart} />
-          <div className="shrink-0 overflow-hidden border-t border-(--border)" style={{ height: drawer.size }}>
+          <div
+            className="shrink-0 overflow-hidden border-t border-(--border) shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.3)]"
+            style={{ height: drawer.size }}
+          >
             <TerminalPane snapshot={sim.snapshot} theme={theme} onDispatch={sim.dispatch} />
           </div>
         </>
