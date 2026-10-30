@@ -7,7 +7,7 @@ No cluster. No hardware. No backend. Open it, press play, and watch the bootstra
 approval gate, an IPI bare-metal install with Ironic, or a control-plane-first rolling upgrade unfold
 as an animated topology with a live event log underneath it.
 
-**[Live demo →](https://yonigofman.github.io/ocp-install-lab/)**
+**[Live demo →](https://yonigofman.github.io/ignition-lab/)**
 
 ## What's in it
 
